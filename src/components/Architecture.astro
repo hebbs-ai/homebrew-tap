@@ -13,31 +13,30 @@
     </div>
 
     <div class="rounded-xl border border-border bg-surface/40 p-6 md:p-10 font-mono text-xs md:text-sm overflow-x-auto">
-      <pre class="text-muted leading-relaxed"><span class="text-text">┌──────────────────────────────────────────────────────────┐</span>
-<span class="text-text">│</span>                    <span class="text-accent">Client SDKs</span>                          <span class="text-text">│</span>
-<span class="text-text">│</span>             <span class="text-cyan">Python</span>  │  <span class="text-cyan">TypeScript</span>  │  <span class="text-cyan">Rust</span>           <span class="text-text">│</span>
-<span class="text-text">├──────────────────────────────────────────────────────────┤</span>
-<span class="text-text">│</span>                <span class="text-accent">gRPC</span>  │  <span class="text-accent">HTTP/REST</span>                      <span class="text-text">│</span>
-<span class="text-text">├──────────────────────────────────────────────────────────┤</span>
-<span class="text-text">│</span>                                                          <span class="text-text">│</span>
-<span class="text-text">│</span>                  <span class="text-accent font-bold">Core Engine</span> <span class="text-muted">(Rust)</span>                     <span class="text-text">│</span>
-<span class="text-text">│</span>                                                          <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-cyan">Remember</span>        <span class="text-cyan">Recall</span>         <span class="text-cyan">Reflect Pipeline</span>    <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-muted">• encode</span>        <span class="text-muted">• prime</span>        <span class="text-muted">• cluster (Rust)</span>    <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-muted">• score</span>         <span class="text-muted">• query</span>        <span class="text-muted">• propose (LLM)</span>     <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-muted">• index</span>         <span class="text-muted">• subscribe</span>    <span class="text-muted">• validate (LLM)</span>    <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-muted">• decay</span>         <span class="text-muted">• merge</span>        <span class="text-muted">• store insights</span>    <span class="text-text">│</span>
-<span class="text-text">│</span>                                                          <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-text">─────────────────────────────────────────────</span>       <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-accent">Index Layer</span>                                         <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-muted">Temporal (B-tree)</span> │ <span class="text-muted">Vector (HNSW)</span> │ <span class="text-muted">Graph</span>          <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-text">─────────────────────────────────────────────</span>       <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-accent">Storage Engine</span> <span class="text-muted">(RocksDB — embedded)</span>                  <span class="text-text">│</span>
-<span class="text-text">│</span>                                                          <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-cyan">Embedding Engine</span>       <span class="text-cyan">LLM Provider</span>                <span class="text-text">│</span>
-<span class="text-text">│</span>   <span class="text-muted">(ONNX Runtime, local)</span>  <span class="text-muted">(reflect only, pluggable)</span>   <span class="text-text">│</span>
-<span class="text-text">│</span>                                                          <span class="text-text">│</span>
-<span class="text-text">└──────────────────────────────────────────────────────────┘</span></pre>
+      <pre class="text-muted leading-relaxed"><span class="text-text">──────────────────────────────────────────────────────────</span>
+                    <span class="text-accent">Client SDKs</span>
+             <span class="text-cyan">Python</span>  │  <span class="text-cyan">TypeScript</span>  │  <span class="text-cyan">Rust</span>
+<span class="text-text">──────────────────────────────────────────────────────────</span>
+                <span class="text-accent">gRPC</span>  │  <span class="text-accent">HTTP/REST</span>
+<span class="text-text">──────────────────────────────────────────────────────────</span>
+
+                  <span class="text-accent font-bold">Core Engine</span> <span class="text-muted">(Rust)</span>
+
+   <span class="text-cyan">Remember</span>        <span class="text-cyan">Recall</span>         <span class="text-cyan">Reflect Pipeline</span>
+   <span class="text-muted">• encode</span>        <span class="text-muted">• prime</span>        <span class="text-muted">• cluster (Rust)</span>
+   <span class="text-muted">• score</span>         <span class="text-muted">• query</span>        <span class="text-muted">• propose (LLM)</span>
+   <span class="text-muted">• index</span>         <span class="text-muted">• subscribe</span>    <span class="text-muted">• validate (LLM)</span>
+   <span class="text-muted">• decay</span>         <span class="text-muted">• merge</span>        <span class="text-muted">• store insights</span>
+
+   <span class="text-text">─────────────────────────────────────────────</span>
+   <span class="text-accent">Index Layer</span>
+   <span class="text-muted">Temporal (B-tree)</span> │ <span class="text-muted">Vector (HNSW)</span> │ <span class="text-muted">Graph</span>
+   <span class="text-text">─────────────────────────────────────────────</span>
+   <span class="text-accent">Storage Engine</span> <span class="text-muted">(RocksDB — embedded)</span>
+
+   <span class="text-cyan">Embedding Engine</span>       <span class="text-cyan">LLM Provider</span>
+   <span class="text-muted">(ONNX Runtime, local)</span>  <span class="text-muted">(reflect only, pluggable)</span>
+<span class="text-text">──────────────────────────────────────────────────────────</span></pre>
     </div>
 
     <div class="grid grid-cols-2 md:grid-cols-5 gap-4 mt-8">
