@@ -17,7 +17,7 @@ use hebbs_core::recall::{RecallOutput, RecallResult, StrategyDetail};
 /// - embedding: list[float] | None
 /// - timestamps: int (microseconds since epoch)
 pub fn memory_to_py(py: Python<'_>, m: &Memory) -> PyResult<PyObject> {
-    let dict = PyDict::new_bound(py);
+    let dict = PyDict::new(py);
 
     let ulid_str = if m.memory_id.len() == 16 {
         let mut bytes = [0u8; 16];
@@ -39,7 +39,7 @@ pub fn memory_to_py(py: Python<'_>, m: &Memory) -> PyResult<PyObject> {
 
     match &m.embedding {
         Some(emb) => {
-            let py_list = PyList::new_bound(py, emb.iter());
+            let py_list = PyList::new(py, emb.iter())?;
             dict.set_item("embedding", py_list)?;
         }
         None => {
@@ -67,17 +67,17 @@ pub fn memory_to_py(py: Python<'_>, m: &Memory) -> PyResult<PyObject> {
 
 /// Convert a RecallOutput to a Python dict.
 pub fn recall_output_to_py(py: Python<'_>, output: &RecallOutput) -> PyResult<PyObject> {
-    let dict = PyDict::new_bound(py);
+    let dict = PyDict::new(py);
 
-    let results = PyList::empty_bound(py);
+    let results = PyList::empty(py);
     for r in &output.results {
         results.append(recall_result_to_py(py, r)?)?;
     }
     dict.set_item("results", results)?;
 
-    let errors = PyList::empty_bound(py);
+    let errors = PyList::empty(py);
     for e in &output.strategy_errors {
-        let err_dict = PyDict::new_bound(py);
+        let err_dict = PyDict::new(py);
         err_dict.set_item("strategy", format!("{:?}", e.strategy))?;
         err_dict.set_item("message", &e.message)?;
         errors.append(err_dict)?;
@@ -93,11 +93,11 @@ pub fn recall_output_to_py(py: Python<'_>, output: &RecallOutput) -> PyResult<Py
 }
 
 fn recall_result_to_py(py: Python<'_>, r: &RecallResult) -> PyResult<PyObject> {
-    let dict = PyDict::new_bound(py);
+    let dict = PyDict::new(py);
     dict.set_item("memory", memory_to_py(py, &r.memory)?)?;
     dict.set_item("score", r.score)?;
 
-    let details = PyList::empty_bound(py);
+    let details = PyList::empty(py);
     for d in &r.strategy_details {
         details.append(strategy_detail_to_py(py, d)?)?;
     }
@@ -107,7 +107,7 @@ fn recall_result_to_py(py: Python<'_>, r: &RecallResult) -> PyResult<PyObject> {
 }
 
 fn strategy_detail_to_py(py: Python<'_>, d: &StrategyDetail) -> PyResult<PyObject> {
-    let dict = PyDict::new_bound(py);
+    let dict = PyDict::new(py);
     match d {
         StrategyDetail::Similarity {
             distance,
@@ -156,7 +156,7 @@ fn strategy_detail_to_py(py: Python<'_>, d: &StrategyDetail) -> PyResult<PyObjec
 
 /// Convert a ForgetOutput to a Python dict.
 pub fn forget_output_to_py(py: Python<'_>, output: &ForgetOutput) -> PyResult<PyObject> {
-    let dict = PyDict::new_bound(py);
+    let dict = PyDict::new(py);
     dict.set_item("forgotten_count", output.forgotten_count)?;
     dict.set_item("cascade_count", output.cascade_count)?;
     dict.set_item("truncated", output.truncated)?;
@@ -169,7 +169,7 @@ pub fn hashmap_to_py(
     py: Python<'_>,
     map: &HashMap<String, serde_json::Value>,
 ) -> PyResult<PyObject> {
-    let dict = PyDict::new_bound(py);
+    let dict = PyDict::new(py);
     for (key, value) in map {
         dict.set_item(key, json_value_to_py(py, value)?)?;
     }
@@ -180,26 +180,26 @@ pub fn hashmap_to_py(
 pub fn json_value_to_py(py: Python<'_>, v: &serde_json::Value) -> PyResult<PyObject> {
     match v {
         serde_json::Value::Null => Ok(py.None()),
-        serde_json::Value::Bool(b) => Ok(b.to_object(py)),
+        serde_json::Value::Bool(b) => Ok((*b).into_pyobject(py)?.to_owned().into_any().unbind()),
         serde_json::Value::Number(n) => {
             if let Some(i) = n.as_i64() {
-                Ok(i.to_object(py))
+                Ok(i.into_pyobject(py)?.into_any().unbind())
             } else if let Some(f) = n.as_f64() {
-                Ok(f.to_object(py))
+                Ok(f.into_pyobject(py)?.into_any().unbind())
             } else {
                 Ok(py.None())
             }
         }
-        serde_json::Value::String(s) => Ok(PyString::new_bound(py, s).into()),
+        serde_json::Value::String(s) => Ok(PyString::new(py, s).into()),
         serde_json::Value::Array(arr) => {
-            let list = PyList::empty_bound(py);
+            let list = PyList::empty(py);
             for item in arr {
                 list.append(json_value_to_py(py, item)?)?;
             }
             Ok(list.into())
         }
         serde_json::Value::Object(obj) => {
-            let dict = PyDict::new_bound(py);
+            let dict = PyDict::new(py);
             for (k, val) in obj {
                 dict.set_item(k, json_value_to_py(py, val)?)?;
             }

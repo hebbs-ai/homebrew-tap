@@ -233,10 +233,10 @@ mod tests {
         }
 
         let a_results = tenant_a
-            .prefix_iterator(ColumnFamilyName::Default, &[b'p'])
+            .prefix_iterator(ColumnFamilyName::Default, b"p")
             .unwrap();
         let b_results = tenant_b
-            .prefix_iterator(ColumnFamilyName::Default, &[b'p'])
+            .prefix_iterator(ColumnFamilyName::Default, b"p")
             .unwrap();
 
         assert_eq!(a_results.len(), 5);

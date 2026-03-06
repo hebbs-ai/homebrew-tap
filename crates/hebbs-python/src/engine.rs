@@ -280,10 +280,10 @@ impl NativeEngine {
         let engine = self.engine.clone();
         let output = py.allow_threads(move || engine.prime(input).map_err(to_py_err))?;
 
-        let dict = PyDict::new_bound(py);
-        let results = PyList::empty_bound(py);
+        let dict = PyDict::new(py);
+        let results = PyList::empty(py);
         for r in &output.results {
-            let rdict = PyDict::new_bound(py);
+            let rdict = PyDict::new(py);
             rdict.set_item("memory", memory_to_py(py, &r.memory)?)?;
             rdict.set_item("score", r.score)?;
             results.append(rdict)?;
@@ -351,7 +351,7 @@ impl NativeEngine {
                 .map_err(to_py_err)
         })?;
 
-        let dict = PyDict::new_bound(py);
+        let dict = PyDict::new(py);
         dict.set_item("insights_created", output.insights_created)?;
         dict.set_item("clusters_found", output.clusters_found)?;
         dict.set_item("clusters_processed", output.clusters_processed)?;
@@ -377,7 +377,7 @@ impl NativeEngine {
         let engine = self.engine.clone();
         let memories = py.allow_threads(move || engine.insights(filter).map_err(to_py_err))?;
 
-        let list = PyList::empty_bound(py);
+        let list = PyList::empty(py);
         for m in &memories {
             list.append(memory_to_py(py, m)?)?;
         }

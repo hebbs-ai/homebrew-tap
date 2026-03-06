@@ -84,7 +84,7 @@ impl NativeSubscription {
             .as_ref()
             .ok_or_else(|| pyo3::exceptions::PyRuntimeError::new_err("subscription is closed"))?;
         let s = handle.stats();
-        let dict = PyDict::new_bound(py);
+        let dict = PyDict::new(py);
         dict.set_item("chunks_processed", s.chunks_processed)?;
         dict.set_item("chunks_bloom_rejected", s.chunks_bloom_rejected)?;
         dict.set_item("chunks_coarse_rejected", s.chunks_coarse_rejected)?;
@@ -108,7 +108,7 @@ impl NativeSubscription {
 }
 
 fn push_to_py(py: Python<'_>, push: &SubscribePush) -> PyResult<PyObject> {
-    let dict = PyDict::new_bound(py);
+    let dict = PyDict::new(py);
     dict.set_item("memory", memory_to_py(py, &push.memory)?)?;
     dict.set_item("confidence", push.confidence)?;
     dict.set_item("push_timestamp_us", push.push_timestamp_us)?;
