@@ -31,6 +31,14 @@ class HebbsInternalError(HebbsError):
     """An internal server error occurred."""
 
 
+class HebbsAuthenticationError(HebbsError):
+    """Authentication failed (missing or invalid API key)."""
+
+
+class HebbsPermissionDeniedError(HebbsError):
+    """The API key does not have the required permissions."""
+
+
 def _map_grpc_error(grpc_error: Exception) -> HebbsError:
     """Convert a grpc.RpcError into the appropriate HebbsError subclass."""
     import grpc
@@ -47,6 +55,8 @@ def _map_grpc_error(grpc_error: Exception) -> HebbsError:
         grpc.StatusCode.NOT_FOUND: HebbsNotFoundError,
         grpc.StatusCode.INVALID_ARGUMENT: HebbsInvalidArgumentError,
         grpc.StatusCode.INTERNAL: HebbsInternalError,
+        grpc.StatusCode.UNAUTHENTICATED: HebbsAuthenticationError,
+        grpc.StatusCode.PERMISSION_DENIED: HebbsPermissionDeniedError,
     }
 
     cls = mapping.get(code, HebbsError)

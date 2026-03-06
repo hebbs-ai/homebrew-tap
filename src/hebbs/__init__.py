@@ -18,11 +18,13 @@ from hebbs.types import (
     SubscribePush,
 )
 from hebbs.exceptions import (
+    HebbsAuthenticationError,
     HebbsConnectionError,
     HebbsError,
     HebbsInternalError,
     HebbsInvalidArgumentError,
     HebbsNotFoundError,
+    HebbsPermissionDeniedError,
     HebbsTimeoutError,
     HebbsUnavailableError,
 )
@@ -44,7 +46,9 @@ __all__ = [
     "SubscribePush",
     "HealthStatus",
     "HebbsError",
+    "HebbsAuthenticationError",
     "HebbsConnectionError",
+    "HebbsPermissionDeniedError",
     "HebbsTimeoutError",
     "HebbsNotFoundError",
     "HebbsUnavailableError",

@@ -3,13 +3,15 @@
 from __future__ import annotations
 
 from hebbs.exceptions import (
-    HebbsError,
+    HebbsAuthenticationError,
     HebbsConnectionError,
-    HebbsTimeoutError,
-    HebbsNotFoundError,
-    HebbsUnavailableError,
-    HebbsInvalidArgumentError,
+    HebbsError,
     HebbsInternalError,
+    HebbsInvalidArgumentError,
+    HebbsNotFoundError,
+    HebbsPermissionDeniedError,
+    HebbsTimeoutError,
+    HebbsUnavailableError,
 )
 
 
@@ -20,6 +22,8 @@ def test_exception_hierarchy():
     assert issubclass(HebbsUnavailableError, HebbsError)
     assert issubclass(HebbsInvalidArgumentError, HebbsError)
     assert issubclass(HebbsInternalError, HebbsError)
+    assert issubclass(HebbsAuthenticationError, HebbsError)
+    assert issubclass(HebbsPermissionDeniedError, HebbsError)
 
 
 def test_exception_message():

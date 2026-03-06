@@ -2,13 +2,14 @@
 
 Usage::
 
-    async with HebbsClient("localhost:6380") as h:
+    async with HebbsClient("localhost:6380", api_key="hb_...") as h:
         mem = await h.remember("Acme Corp uses Salesforce", importance=0.8)
         results = await h.recall("What CRM does Acme use?")
 """
 
 from __future__ import annotations
 
+import os
 from typing import Any
 
 import grpc
@@ -31,21 +32,68 @@ from hebbs.types import (
 )
 
 
+class _AuthMetadataInterceptor(
+    grpc.aio.UnaryUnaryClientInterceptor,
+    grpc.aio.UnaryStreamClientInterceptor,
+):
+    """Injects ``authorization: Bearer <key>`` metadata into every gRPC call."""
+
+    def __init__(self, api_key: str) -> None:
+        self._metadata = [("authorization", f"Bearer {api_key}")]
+
+    def _inject(self, client_call_details: grpc.aio.ClientCallDetails) -> _CallDetails:
+        metadata = list(client_call_details.metadata or [])
+        metadata.extend(self._metadata)
+        return _CallDetails(
+            method=client_call_details.method,
+            timeout=client_call_details.timeout,
+            metadata=metadata,
+            credentials=client_call_details.credentials,
+            wait_for_ready=client_call_details.wait_for_ready,
+        )
+
+    async def intercept_unary_unary(self, continuation, client_call_details, request):
+        return await continuation(self._inject(client_call_details), request)
+
+    async def intercept_unary_stream(self, continuation, client_call_details, request):
+        return await continuation(self._inject(client_call_details), request)
+
+
+class _CallDetails(grpc.aio.ClientCallDetails):
+    """Concrete ``ClientCallDetails`` with writable attributes."""
+
+    def __init__(self, method, timeout, metadata, credentials, wait_for_ready):
+        self.method = method
+        self.timeout = timeout
+        self.metadata = metadata
+        self.credentials = credentials
+        self.wait_for_ready = wait_for_ready
+
+
 class HebbsClient:
     """Async client for the HEBBS cognitive memory engine.
 
     Connects to a running HEBBS gRPC server and exposes all operations
     as async methods with Pythonic types (no protobuf in the public API).
+
+    Args:
+        address: Server gRPC endpoint (default ``localhost:6380``).
+        api_key: API key for authentication (``hb_...``). Falls back to
+            the ``HEBBS_API_KEY`` environment variable if not provided.
+        tenant_id: Explicit tenant ID (normally derived from the API key).
+        channel_options: Additional gRPC channel options.
     """
 
     def __init__(
         self,
         address: str = "localhost:6380",
         *,
+        api_key: str | None = None,
         tenant_id: str | None = None,
         channel_options: list[tuple[str, Any]] | None = None,
     ) -> None:
         self._address = address
+        self._api_key = api_key or os.environ.get("HEBBS_API_KEY")
         self._tenant_id = tenant_id
         self._channel_options = channel_options or []
         self._channel: grpc.aio.Channel | None = None
@@ -62,7 +110,15 @@ class HebbsClient:
 
     async def connect(self) -> HebbsClient:
         """Open the gRPC channel and create service stubs."""
-        self._channel = grpc.aio.insecure_channel(self._address, options=self._channel_options)
+        interceptors = []
+        if self._api_key:
+            interceptors.append(_AuthMetadataInterceptor(self._api_key))
+
+        self._channel = grpc.aio.insecure_channel(
+            self._address,
+            options=self._channel_options,
+            interceptors=interceptors or None,
+        )
         mem_stub = hebbs_pb2_grpc.MemoryServiceStub(self._channel)
         sub_stub = hebbs_pb2_grpc.SubscribeServiceStub(self._channel)
         ref_stub = hebbs_pb2_grpc.ReflectServiceStub(self._channel)

@@ -41,7 +41,8 @@ import asyncio
 from hebbs import HebbsClient
 
 async def main():
-    async with HebbsClient("localhost:6380") as h:
+    # Pass api_key directly, or set HEBBS_API_KEY env var
+    async with HebbsClient("localhost:6380", api_key="hb_...") as h:
         # Store a memory (entity-scoped)
         mem = await h.remember(
             content="Acme Corp uses Salesforce CRM and has 200 engineers",
