@@ -11,7 +11,7 @@ members = [
     "crates/hebbs-cli",
     "crates/hebbs-client",
     "crates/hebbs-ffi",
-    "crates/hebbs-python",
+    "crates/hebbs-python-native",
     "crates/hebbs-bench",
 ]
 

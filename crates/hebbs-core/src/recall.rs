@@ -108,6 +108,19 @@ pub struct RecallInput {
 
     /// Memory B for analogical recall (A:B::C:?). Enables vector arithmetic.
     pub analogy_b_id: Option<[u8; 16]>,
+
+    /// Explicit seed memory ID for causal graph traversal. When provided,
+    /// the causal strategy starts the walk from this memory instead of
+    /// auto-detecting from the cue text or embedding. Default: None (auto-detect).
+    pub seed_memory_id: Option<[u8; 16]>,
+
+    /// Override analogical alpha blending. Controls the balance between
+    /// embedding similarity and structural similarity:
+    /// - 1.0 = pure embedding similarity (same as similarity strategy)
+    /// - 0.0 = pure structural similarity (only relationship patterns)
+    /// - 0.5 = balanced blend (default)
+    /// Clamped to [0.0, 1.0]. Default: 0.5.
+    pub analogical_alpha: Option<f32>,
 }
 
 impl RecallInput {
@@ -127,6 +140,8 @@ impl RecallInput {
             causal_direction: None,
             analogy_a_id: None,
             analogy_b_id: None,
+            seed_memory_id: None,
+            analogical_alpha: None,
         }
     }
 
@@ -146,6 +161,8 @@ impl RecallInput {
             causal_direction: None,
             analogy_a_id: None,
             analogy_b_id: None,
+            seed_memory_id: None,
+            analogical_alpha: None,
         }
     }
 }

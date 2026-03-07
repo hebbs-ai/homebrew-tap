@@ -267,6 +267,8 @@ fn bench_recall_temporal(c: &mut Criterion) {
                         causal_direction: None,
                         analogy_a_id: None,
                         analogy_b_id: None,
+                        seed_memory_id: None,
+                        analogical_alpha: None,
                     }))
                     .unwrap();
             });

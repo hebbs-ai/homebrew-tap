@@ -1,11 +1,11 @@
 [package]
-name = "hebbs-python"
+name = "hebbs-python-native"
 version.workspace = true
 edition.workspace = true
 rust-version.workspace = true
 license = "BSL-1.1"
 repository.workspace = true
-description = "Python SDK native extension for HEBBS cognitive memory engine"
+description = "PyO3 native extension for embedded HEBBS engine (not the public SDK -- use 'hebbs' from PyPI instead)"
 
 [lib]
 name = "_hebbs_native"

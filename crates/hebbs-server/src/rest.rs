@@ -15,7 +15,11 @@ use axum::{
 use hebbs_core::engine::{Engine, RememberInput};
 use hebbs_core::forget::ForgetCriteria;
 use hebbs_core::memory::MemoryKind;
-use hebbs_core::recall::{PrimeInput, RecallInput, RecallStrategy};
+use hebbs_core::recall::{
+    PrimeInput, RecallInput, RecallStrategy, ScoringWeights, StrategyDetail,
+    DEFAULT_MAX_AGE_US, DEFAULT_REINFORCEMENT_CAP,
+};
+use hebbs_index::EdgeType;
 use hebbs_core::reflect::InsightsFilter;
 use hebbs_core::revise::{ContextMode, ReviseInput};
 use hebbs_core::subscribe::SubscribeConfig;
@@ -89,6 +93,16 @@ struct RememberBody {
 }
 
 #[derive(Deserialize)]
+struct ScoringWeightsBody {
+    w_relevance: Option<f32>,
+    w_recency: Option<f32>,
+    w_importance: Option<f32>,
+    w_reinforcement: Option<f32>,
+    max_age_us: Option<u64>,
+    reinforcement_cap: Option<u64>,
+}
+
+#[derive(Deserialize)]
 struct RecallBody {
     cue: String,
     strategies: Vec<String>,
@@ -96,6 +110,12 @@ struct RecallBody {
     entity_id: Option<String>,
     time_range: Option<TimeRangeBody>,
     max_depth: Option<usize>,
+    scoring_weights: Option<ScoringWeightsBody>,
+    ef_search: Option<usize>,
+    edge_types: Option<Vec<String>>,
+    seed_memory_id: Option<String>,
+    analogical_alpha: Option<f32>,
+    cue_context: Option<serde_json::Value>,
 }
 
 #[derive(Deserialize)]
@@ -111,6 +131,7 @@ struct PrimeBody {
     max_memories: Option<usize>,
     recency_window_us: Option<u64>,
     similarity_cue: Option<String>,
+    scoring_weights: Option<ScoringWeightsBody>,
 }
 
 #[derive(Deserialize)]
@@ -170,9 +191,74 @@ struct ForgetResponseJson {
 }
 
 #[derive(Serialize)]
+struct StrategyDetailJson {
+    strategy: String,
+    relevance: f32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    distance: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    timestamp: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rank: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    depth: Option<usize>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    embedding_similarity: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    structural_similarity: Option<f32>,
+}
+
+fn strategy_detail_to_json(d: &StrategyDetail) -> StrategyDetailJson {
+    match d {
+        StrategyDetail::Similarity { distance, relevance } => StrategyDetailJson {
+            strategy: "similarity".to_string(),
+            relevance: *relevance,
+            distance: Some(*distance),
+            timestamp: None,
+            rank: None,
+            depth: None,
+            embedding_similarity: None,
+            structural_similarity: None,
+        },
+        StrategyDetail::Temporal { timestamp, rank, relevance } => StrategyDetailJson {
+            strategy: "temporal".to_string(),
+            relevance: *relevance,
+            distance: None,
+            timestamp: Some(*timestamp),
+            rank: Some(*rank),
+            depth: None,
+            embedding_similarity: None,
+            structural_similarity: None,
+        },
+        StrategyDetail::Causal { depth, relevance, .. } => StrategyDetailJson {
+            strategy: "causal".to_string(),
+            relevance: *relevance,
+            distance: None,
+            timestamp: None,
+            rank: None,
+            depth: Some(*depth),
+            embedding_similarity: None,
+            structural_similarity: None,
+        },
+        StrategyDetail::Analogical { embedding_similarity, structural_similarity, relevance, .. } => StrategyDetailJson {
+            strategy: "analogical".to_string(),
+            relevance: *relevance,
+            distance: None,
+            timestamp: None,
+            rank: None,
+            depth: None,
+            embedding_similarity: Some(*embedding_similarity),
+            structural_similarity: Some(*structural_similarity),
+        },
+    }
+}
+
+#[derive(Serialize)]
 struct RecallResultJson {
     memory: MemoryJson,
     score: f32,
+    relevance: f32,
+    strategy_details: Vec<StrategyDetailJson>,
 }
 
 #[derive(Serialize)]
@@ -234,12 +320,64 @@ fn map_hebbs_error(e: hebbs_core::error::HebbsError) -> (StatusCode, Json<ErrorJ
     json_error(status, code, &msg)
 }
 
+fn scoring_weights_from_body(sw: ScoringWeightsBody) -> ScoringWeights {
+    ScoringWeights {
+        w_relevance: sw.w_relevance.unwrap_or(0.5),
+        w_recency: sw.w_recency.unwrap_or(0.2),
+        w_importance: sw.w_importance.unwrap_or(0.2),
+        w_reinforcement: sw.w_reinforcement.unwrap_or(0.1),
+        max_age_us: sw.max_age_us.unwrap_or(DEFAULT_MAX_AGE_US),
+        reinforcement_cap: sw.reinforcement_cap.unwrap_or(DEFAULT_REINFORCEMENT_CAP),
+    }
+}
+
+fn recall_result_to_rest_json(r: &hebbs_core::recall::RecallResult) -> RecallResultJson {
+    let primary_relevance = r.strategy_details.first().map(|d| d.relevance()).unwrap_or(0.0);
+    RecallResultJson {
+        memory: memory_to_json(&r.memory),
+        score: r.score,
+        relevance: primary_relevance,
+        strategy_details: r.strategy_details.iter().map(strategy_detail_to_json).collect(),
+    }
+}
+
 fn parse_strategy(s: &str) -> Option<RecallStrategy> {
     match s.to_lowercase().as_str() {
         "similarity" => Some(RecallStrategy::Similarity),
         "temporal" => Some(RecallStrategy::Temporal),
         "causal" => Some(RecallStrategy::Causal),
         "analogical" => Some(RecallStrategy::Analogical),
+        _ => None,
+    }
+}
+
+fn parse_edge_type(s: &str) -> Option<EdgeType> {
+    match s.to_lowercase().as_str() {
+        "caused_by" => Some(EdgeType::CausedBy),
+        "followed_by" => Some(EdgeType::FollowedBy),
+        "related_to" => Some(EdgeType::RelatedTo),
+        "revised_from" => Some(EdgeType::RevisedFrom),
+        "insight_from" => Some(EdgeType::InsightFrom),
+        _ => None,
+    }
+}
+
+fn parse_hex_id_16(s: &str) -> Option<[u8; 16]> {
+    let bytes = hex::decode(s).ok()?;
+    if bytes.len() == 16 {
+        let mut arr = [0u8; 16];
+        arr.copy_from_slice(&bytes);
+        Some(arr)
+    } else {
+        None
+    }
+}
+
+fn json_value_to_hashmap(
+    val: serde_json::Value,
+) -> Option<HashMap<String, serde_json::Value>> {
+    match val {
+        serde_json::Value::Object(map) => Some(map.into_iter().collect()),
         _ => None,
     }
 }
@@ -354,20 +492,33 @@ async fn recall_handler(
         }
     };
 
+    let edge_types = body.edge_types.map(|types| {
+        types
+            .iter()
+            .filter_map(|s| parse_edge_type(s))
+            .collect::<Vec<EdgeType>>()
+    });
+
+    let seed_memory_id = body.seed_memory_id.and_then(|s| parse_hex_id_16(&s));
+
+    let cue_context = body.cue_context.and_then(json_value_to_hashmap);
+
     let input = RecallInput {
         cue: body.cue,
         strategies,
         top_k: body.top_k,
         entity_id: body.entity_id,
         time_range: body.time_range.map(|tr| (tr.start_us, tr.end_us)),
-        edge_types: None,
+        edge_types,
         max_depth: body.max_depth,
-        ef_search: None,
-        scoring_weights: None,
-        cue_context: None,
+        ef_search: body.ef_search,
+        scoring_weights: body.scoring_weights.map(scoring_weights_from_body),
+        cue_context,
         causal_direction: None,
         analogy_a_id: None,
         analogy_b_id: None,
+        seed_memory_id,
+        analogical_alpha: body.analogical_alpha,
     };
 
     let engine = state.engine.clone();
@@ -381,10 +532,7 @@ async fn recall_handler(
             let results: Vec<RecallResultJson> = output
                 .results
                 .iter()
-                .map(|r| RecallResultJson {
-                    memory: memory_to_json(&r.memory),
-                    score: r.score,
-                })
+                .map(recall_result_to_rest_json)
                 .collect();
             (
                 StatusCode::OK,
@@ -425,7 +573,7 @@ async fn prime_handler(
         max_memories: body.max_memories,
         recency_window_us: body.recency_window_us,
         similarity_cue: body.similarity_cue,
-        scoring_weights: None,
+        scoring_weights: body.scoring_weights.map(scoring_weights_from_body),
     };
 
     let engine = state.engine.clone();
@@ -439,10 +587,7 @@ async fn prime_handler(
             let results: Vec<RecallResultJson> = output
                 .results
                 .iter()
-                .map(|r| RecallResultJson {
-                    memory: memory_to_json(&r.memory),
-                    score: r.score,
-                })
+                .map(recall_result_to_rest_json)
                 .collect();
             (
                 StatusCode::OK,

@@ -112,6 +112,26 @@ pub enum Commands {
         /// Seed memory ID for causal strategy
         #[arg(long)]
         seed: Option<String>,
+
+        /// Scoring weights as "relevance:recency:importance:reinforcement" (e.g. "1:0:0:0" for pure relevance)
+        #[arg(short, long, value_name = "R:T:I:F")]
+        weights: Option<String>,
+
+        /// Override HNSW ef_search for this query (default: 50). Higher values increase recall accuracy but add latency.
+        #[arg(long)]
+        ef_search: Option<u32>,
+
+        /// Edge types to follow in causal traversal (comma-separated: caused_by,followed_by,related_to,revised_from,insight_from)
+        #[arg(long, value_delimiter = ',')]
+        edge_types: Option<Vec<String>>,
+
+        /// Time range for temporal strategy as START_US:END_US (microseconds since epoch)
+        #[arg(long, value_name = "START:END")]
+        time_range: Option<String>,
+
+        /// Analogical alpha: blends embedding similarity (1.0) vs structural similarity (0.0). Default: 0.5.
+        #[arg(long)]
+        analogical_alpha: Option<f32>,
     },
 
     /// Update an existing memory

@@ -51,14 +51,14 @@ jobs:
         with:
           python-version: "3.12"
       - name: Build Python SDK
-        working-directory: crates/hebbs-python
+        working-directory: crates/hebbs-python-native
         run: |
           python -m venv .venv
           source .venv/bin/activate
           pip install maturin pytest
           maturin develop --release
       - name: Run Python benchmarks
-        working-directory: crates/hebbs-python
+        working-directory: crates/hebbs-python-native
         run: |
           source .venv/bin/activate
           python -m pytest tests/ -v --tb=short

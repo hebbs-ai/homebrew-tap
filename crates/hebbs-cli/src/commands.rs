@@ -50,6 +50,11 @@ pub async fn execute(
             entity_id,
             max_depth,
             seed,
+            weights,
+            ef_search,
+            edge_types,
+            time_range,
+            analogical_alpha,
         } => {
             execute_recall(
                 conn,
@@ -60,6 +65,11 @@ pub async fn execute(
                 entity_id,
                 max_depth,
                 seed,
+                weights,
+                ef_search,
+                edge_types,
+                time_range,
+                analogical_alpha,
                 &mut stdout,
             )
             .await
@@ -242,6 +252,32 @@ fn read_stdin_content(content: Option<String>) -> Result<String, CliError> {
     })
 }
 
+fn parse_scoring_weights(s: &str) -> Result<pb::ScoringWeights, CliError> {
+    let parts: Vec<&str> = s.split(':').collect();
+    if parts.len() != 4 {
+        return Err(CliError::InvalidArgument {
+            message: format!(
+                "Weights must be 4 colon-separated floats (R:T:I:F), got {} parts: \"{}\"",
+                parts.len(),
+                s,
+            ),
+        });
+    }
+    let parse = |part: &str, name: &str| -> Result<f32, CliError> {
+        part.parse::<f32>().map_err(|_| CliError::InvalidArgument {
+            message: format!("Invalid {} weight \"{}\": must be a number", name, part),
+        })
+    };
+    Ok(pb::ScoringWeights {
+        w_relevance: parse(parts[0], "relevance")?,
+        w_recency: parse(parts[1], "recency")?,
+        w_importance: parse(parts[2], "importance")?,
+        w_reinforcement: parse(parts[3], "reinforcement")?,
+        max_age_us: 0,
+        reinforcement_cap: 0,
+    })
+}
+
 // ═══════════════════════════════════════════════════════════════════════
 //  Command Implementations
 // ═══════════════════════════════════════════════════════════════════════
@@ -337,6 +373,11 @@ async fn execute_recall(
     entity_id: Option<String>,
     max_depth: Option<u32>,
     seed: Option<String>,
+    weights: Option<String>,
+    ef_search: Option<u32>,
+    edge_types: Option<Vec<String>>,
+    time_range: Option<String>,
+    analogical_alpha: Option<f32>,
     w: &mut dyn Write,
 ) -> Result<(), CliError> {
     let cue = cue.unwrap_or_default();
@@ -356,23 +397,70 @@ async fn execute_recall(
         None => None,
     };
 
+    let scoring_weights = match weights {
+        Some(ref w_str) => Some(parse_scoring_weights(w_str)?),
+        None => None,
+    };
+
+    let parsed_edge_types: Vec<i32> = match edge_types {
+        Some(ref types) => types
+            .iter()
+            .map(|t| match t.as_str() {
+                "caused_by" => Ok(pb::EdgeType::CausedBy as i32),
+                "followed_by" => Ok(pb::EdgeType::FollowedBy as i32),
+                "related_to" => Ok(pb::EdgeType::RelatedTo as i32),
+                "revised_from" => Ok(pb::EdgeType::RevisedFrom as i32),
+                "insight_from" => Ok(pb::EdgeType::InsightFrom as i32),
+                other => Err(CliError::InvalidArgument {
+                    message: format!(
+                        "Unknown edge type \"{}\". Valid types: caused_by, followed_by, related_to, revised_from, insight_from",
+                        other,
+                    ),
+                }),
+            })
+            .collect::<Result<Vec<_>, _>>()?,
+        None => Vec::new(),
+    };
+
+    let parsed_time_range = match time_range {
+        Some(ref tr) => {
+            let parts: Vec<&str> = tr.split(':').collect();
+            if parts.len() != 2 {
+                return Err(CliError::InvalidArgument {
+                    message: format!(
+                        "Time range must be START_US:END_US, got \"{}\"",
+                        tr,
+                    ),
+                });
+            }
+            let start_us = parts[0].parse::<u64>().map_err(|_| CliError::InvalidArgument {
+                message: format!("Invalid start timestamp \"{}\": must be a u64", parts[0]),
+            })?;
+            let end_us = parts[1].parse::<u64>().map_err(|_| CliError::InvalidArgument {
+                message: format!("Invalid end timestamp \"{}\": must be a u64", parts[1]),
+            })?;
+            Some(pb::TimeRange { start_us, end_us })
+        }
+        None => None,
+    };
+
     let strategy_config = pb::RecallStrategyConfig {
         strategy_type: strategy_type as i32,
         top_k: Some(top_k),
-        ef_search: None,
+        ef_search,
         entity_id,
-        time_range: None,
+        time_range: parsed_time_range,
         seed_memory_id,
-        edge_types: Vec::new(),
+        edge_types: parsed_edge_types,
         max_depth,
-        analogical_alpha: None,
+        analogical_alpha,
     };
 
     let req = pb::RecallRequest {
         cue,
         strategies: vec![strategy_config],
         top_k: Some(top_k),
-        scoring_weights: None,
+        scoring_weights,
         cue_context: None,
         tenant_id: None,
     };

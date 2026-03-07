@@ -4,7 +4,6 @@ on:
   push:
     tags:
       - "v*"
-      - "py-v*"
 
 env:
   CARGO_TERM_COLOR: always
@@ -172,52 +171,6 @@ jobs:
           docker stop hebbs-smoke 2>/dev/null || true
           docker rm hebbs-smoke 2>/dev/null || true
 
-  build-python-wheels:
-    name: Python wheel (${{ matrix.os }}-${{ matrix.target }})
-    runs-on: ${{ matrix.os }}
-    if: startsWith(github.ref, 'refs/tags/py-v')
-    strategy:
-      matrix:
-        include:
-          - os: ubuntu-latest
-            target: x86_64
-            manylinux: "2_28"
-          - os: ubuntu-latest
-            target: aarch64
-            manylinux: "2_28"
-          - os: macos-latest
-            target: aarch64
-          - os: macos-13
-            target: x86_64
-    steps:
-      - uses: actions/checkout@v4
-      - uses: PyO3/maturin-action@v1
-        with:
-          working-directory: crates/hebbs-python
-          target: ${{ matrix.target }}
-          args: --release --out dist
-          manylinux: ${{ matrix.manylinux || 'auto' }}
-      - uses: actions/upload-artifact@v4
-        with:
-          name: python-wheel-${{ matrix.os }}-${{ matrix.target }}
-          path: crates/hebbs-python/dist/
-
-  python-sdist:
-    name: Python sdist
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/py-v')
-    steps:
-      - uses: actions/checkout@v4
-      - uses: PyO3/maturin-action@v1
-        with:
-          working-directory: crates/hebbs-python
-          command: sdist
-          args: --out dist
-      - uses: actions/upload-artifact@v4
-        with:
-          name: python-sdist
-          path: crates/hebbs-python/dist/
-
   create-release:
     name: Create Release
     needs: [build-binaries]
@@ -240,24 +193,3 @@ jobs:
         with:
           files: artifacts/*
           generate_release_notes: true
-
-  publish-pypi:
-    name: Publish to PyPI
-    needs: [build-python-wheels, python-sdist]
-    runs-on: ubuntu-latest
-    if: startsWith(github.ref, 'refs/tags/py-v')
-    environment: pypi
-    permissions:
-      id-token: write
-    steps:
-      - uses: actions/download-artifact@v4
-        with:
-          path: dist
-          pattern: python-*
-          merge-multiple: true
-      - uses: PyO3/maturin-action@v1
-        with:
-          command: upload
-          args: --non-interactive --skip-existing dist/*
-        env:
-          MATURIN_PYPI_TOKEN: ${{ secrets.PYPI_TOKEN }}

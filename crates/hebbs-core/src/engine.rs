@@ -766,6 +766,8 @@ impl Engine {
             causal_direction: input.causal_direction.unwrap_or_default(),
             analogy_a_id: input.analogy_a_id,
             analogy_b_id: input.analogy_b_id,
+            seed_memory_id: input.seed_memory_id,
+            analogical_alpha: input.analogical_alpha,
         };
 
         let outcomes = if input.strategies.len() == 1 {
@@ -1965,6 +1967,7 @@ impl Engine {
                 ctx.tenant_id,
                 &ctx.causal_direction,
                 ctx.entity_id,
+                ctx.seed_memory_id,
             ),
             RecallStrategy::Analogical => self.execute_analogical(
                 storage,
@@ -1976,6 +1979,7 @@ impl Engine {
                 ctx.analogy_a_id,
                 ctx.analogy_b_id,
                 ctx.entity_id,
+                ctx.analogical_alpha,
             ),
         }
     }
@@ -2168,7 +2172,38 @@ impl Engine {
         tenant_id: &str,
         direction: &CausalDirection,
         entity_id: Option<&str>,
+        seed_memory_id: Option<[u8; 16]>,
     ) -> StrategyOutcome {
+        if let Some(seed) = seed_memory_id {
+            match Self::get_from_storage(storage, &seed) {
+                Ok(mem) => {
+                    if let Some(eid) = entity_id {
+                        if mem.entity_id.as_deref() != Some(eid) {
+                            return StrategyOutcome::Err(
+                                RecallStrategy::Causal,
+                                format!(
+                                    "causal seed memory belongs to a different entity (expected {})",
+                                    eid
+                                ),
+                            );
+                        }
+                    }
+                }
+                Err(_) => {
+                    return StrategyOutcome::Err(
+                        RecallStrategy::Causal,
+                        format!(
+                            "causal recall seed memory not found: {}",
+                            hex::encode(seed)
+                        ),
+                    );
+                }
+            }
+            return self.causal_from_seed(
+                storage, seed, edge_types, max_depth, top_k, tenant_id, direction, entity_id,
+            );
+        }
+
         let seed_id = if cue.len() == 32 && cue.chars().all(|c| c.is_ascii_hexdigit()) {
             match hex::decode(cue) {
                 Ok(bytes) if bytes.len() == 16 => {
@@ -2452,6 +2487,7 @@ impl Engine {
         analogy_a_id: Option<[u8; 16]>,
         analogy_b_id: Option<[u8; 16]>,
         entity_id: Option<&str>,
+        analogical_alpha: Option<f32>,
     ) -> StrategyOutcome {
         if let (Some(a_id), Some(b_id)) = (analogy_a_id, analogy_b_id) {
             let a_mem = Self::get_from_storage(storage, &a_id);
@@ -2559,7 +2595,10 @@ impl Engine {
                 }
             };
 
-        let analogical_weights = AnalogicalWeights::default();
+        let mut analogical_weights = AnalogicalWeights::default();
+        if let Some(alpha) = analogical_alpha {
+            analogical_weights.alpha = alpha.clamp(0.0, 1.0);
+        }
         let cue_ctx = cue_context.cloned().unwrap_or_default();
 
         let mut scored_candidates: Vec<StrategyResult> = Vec::with_capacity(search_results.len());
@@ -2779,6 +2818,8 @@ struct StrategyContext<'a> {
     causal_direction: CausalDirection,
     analogy_a_id: Option<[u8; 16]>,
     analogy_b_id: Option<[u8; 16]>,
+    seed_memory_id: Option<[u8; 16]>,
+    analogical_alpha: Option<f32>,
 }
 
 /// Returns the current time as microseconds since the Unix epoch.
@@ -3389,6 +3430,8 @@ mod tests {
             causal_direction: None,
             analogy_a_id: None,
             analogy_b_id: None,
+            seed_memory_id: None,
+            analogical_alpha: None,
         };
         let err = engine.recall(input).unwrap_err();
         assert!(matches!(err, HebbsError::InvalidInput { .. }));

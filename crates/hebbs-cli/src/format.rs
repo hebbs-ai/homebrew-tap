@@ -495,6 +495,7 @@ impl Renderer {
         table.set_header(vec![
             Cell::new("#").set_alignment(CellAlignment::Right),
             Cell::new("Score"),
+            Cell::new("Relevance"),
             Cell::new("Memory ID"),
             Cell::new("Kind"),
             Cell::new("Content"),
@@ -505,10 +506,16 @@ impl Renderer {
                 let id = ulid_to_string(&m.memory_id);
                 let content = truncate_content(&m.content, 60);
                 let kind = format_kind(m.kind);
+                let relevance = r
+                    .strategy_details
+                    .first()
+                    .map(|d| format!("{:.4}", d.relevance))
+                    .unwrap_or_else(|| "--".to_string());
 
                 table.add_row(vec![
                     Cell::new(i + 1).set_alignment(CellAlignment::Right),
                     Cell::new(format!("{:.4}", r.score)),
+                    Cell::new(&relevance),
                     Cell::new(&id),
                     Cell::new(&kind),
                     Cell::new(&content),
@@ -675,9 +682,49 @@ impl Renderer {
 // ═══════════════════════════════════════════════════════════════════════
 
 #[derive(Serialize)]
+struct StrategyDetailJson {
+    strategy: String,
+    relevance: f32,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    distance: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    timestamp: Option<u64>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    rank: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    depth: Option<u32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    embedding_similarity: Option<f32>,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    structural_similarity: Option<f32>,
+}
+
+fn proto_strategy_detail_to_json(d: &pb::StrategyDetailMessage) -> StrategyDetailJson {
+    let strategy = match d.strategy_type {
+        x if x == pb::RecallStrategyType::Similarity as i32 => "similarity",
+        x if x == pb::RecallStrategyType::Temporal as i32 => "temporal",
+        x if x == pb::RecallStrategyType::Causal as i32 => "causal",
+        x if x == pb::RecallStrategyType::Analogical as i32 => "analogical",
+        _ => "unknown",
+    };
+    StrategyDetailJson {
+        strategy: strategy.to_string(),
+        relevance: d.relevance,
+        distance: d.distance,
+        timestamp: d.timestamp,
+        rank: d.rank,
+        depth: d.depth,
+        embedding_similarity: d.embedding_similarity,
+        structural_similarity: d.structural_similarity,
+    }
+}
+
+#[derive(Serialize)]
 struct RecallResultJson {
     memory: MemoryJson,
     score: f32,
+    relevance: f32,
+    strategy_details: Vec<StrategyDetailJson>,
 }
 
 fn recall_result_to_json(r: &pb::RecallResult) -> RecallResultJson {
@@ -700,9 +747,16 @@ fn recall_result_to_json(r: &pb::RecallResult) -> RecallResultJson {
             logical_clock: 0,
             embedding_dimensions: None,
         });
+    let relevance = r
+        .strategy_details
+        .first()
+        .map(|d| d.relevance)
+        .unwrap_or(0.0);
     RecallResultJson {
         memory,
         score: r.score,
+        relevance,
+        strategy_details: r.strategy_details.iter().map(proto_strategy_detail_to_json).collect(),
     }
 }
 

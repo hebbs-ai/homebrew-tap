@@ -198,6 +198,8 @@ pub fn proto_to_recall_input(req: pb::RecallRequest) -> Result<RecallInput, Stri
     let mut edge_types_vec = None;
     let mut max_depth = None;
     let mut ef_search = None;
+    let mut seed_memory_id = None;
+    let mut analogical_alpha = None;
 
     for sc in &req.strategies {
         let strategy = match pb::RecallStrategyType::try_from(sc.strategy_type) {
@@ -233,6 +235,16 @@ pub fn proto_to_recall_input(req: pb::RecallRequest) -> Result<RecallInput, Stri
         if let Some(e) = sc.ef_search {
             ef_search = Some(e as usize);
         }
+        if let Some(ref bytes) = sc.seed_memory_id {
+            if bytes.len() == 16 {
+                let mut id = [0u8; 16];
+                id.copy_from_slice(bytes);
+                seed_memory_id = Some(id);
+            }
+        }
+        if let Some(a) = sc.analogical_alpha {
+            analogical_alpha = Some(a);
+        }
     }
 
     let scoring_weights = req.scoring_weights.map(|w| proto_to_scoring_weights(&w));
@@ -253,6 +265,8 @@ pub fn proto_to_recall_input(req: pb::RecallRequest) -> Result<RecallInput, Stri
         causal_direction: None,
         analogy_a_id: None,
         analogy_b_id: None,
+        seed_memory_id,
+        analogical_alpha,
     })
 }
 
