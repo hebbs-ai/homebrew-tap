@@ -45,8 +45,100 @@ HEBBS supports four recall strategies. Each targets a different access pattern. 
 
 **Example use case**: A product manager asks "Have we seen a similar launch failure before?" Analogical recall finds past launches with comparable failure patterns, even if the domains differ.
 
-## Multi-Strategy Recall and Composite Scoring
+## Multi-Strategy Recall
 
-You can invoke multiple strategies in a single request or combine results client-side. HEBBS also supports composite scoring: e.g., similarity score × recency decay × importance. This lets you bias toward "recent, important, and semantically relevant" without running separate queries.
+You can invoke multiple strategies in a single `recall` request. When you do, HEBBS executes them in parallel, deduplicates results by memory ID (keeping the highest relevance), computes a composite score for each, and returns a single ranked list truncated to `top_k`.
 
 When combining strategies, consider latency: similarity and temporal are fastest; causal and analogical add graph traversal cost. Use strategy-specific limits (`top_k`, `max_depth`) to stay within latency budgets.
+
+## Composite Scoring
+
+Every recall result includes a **composite score** -- the number shown in CLI output and returned as `score` in API responses. This is **not** raw cosine similarity. It's a weighted blend of four signals:
+
+```
+composite = w_relevance      × relevance
+          + w_recency        × recency_signal
+          + w_importance      × importance
+          + w_reinforcement   × reinforcement_signal
+```
+
+### The Four Signals
+
+| Signal | Range | What it measures | How it's computed |
+|--------|-------|-----------------|-------------------|
+| **Relevance** | 0.0 -- 1.0 | Semantic match between query and memory | `1.0 - hnsw_distance` (cosine similarity for normalized embeddings) |
+| **Recency** | 0.0 -- 1.0 | How recently the memory was created | `1.0 - (age / max_age)`, where `max_age` defaults to 30 days. A brand-new memory scores 1.0; a 30-day-old memory scores 0.0. |
+| **Importance** | 0.0 -- 1.0 | Memory's importance value | The `importance` field set at `remember` time. Defaults to 0.5 if not specified. |
+| **Reinforcement** | 0.0 -- 1.0 | How often this memory has been recalled | `log₂(1 + access_count) / log₂(1 + cap)`, where `cap` defaults to 100. A never-recalled memory scores 0.0. |
+
+### Default Weights
+
+| Weight | Default | Effect |
+|--------|---------|--------|
+| `w_relevance` | **0.5** | Relevance contributes half the score |
+| `w_recency` | **0.2** | Recent memories rank higher |
+| `w_importance` | **0.2** | High-importance memories rank higher |
+| `w_reinforcement` | **0.1** | Frequently recalled memories rank higher |
+
+With these defaults, the theoretical maximum score for a brand-new, never-recalled memory with default importance (0.5) is:
+
+```
+0.5 × 1.0  +  0.2 × 1.0  +  0.2 × 0.5  +  0.1 × 0.0  =  0.80
+```
+
+So a score of 0.67 does not mean weak similarity. The raw cosine similarity is likely 0.85+, blended down by the other signals.
+
+### Customizing Weights
+
+Pass `scoring_weights` to override the defaults. This works via gRPC, REST, and the Python SDK.
+
+**Pure relevance ranking** (ignore recency, importance, reinforcement):
+
+```python
+results = await client.recall(
+    "Acme meeting",
+    strategies=["similarity"],
+    scoring_weights={
+        "w_relevance": 1.0,
+        "w_recency": 0.0,
+        "w_importance": 0.0,
+        "w_reinforcement": 0.0,
+    },
+)
+```
+
+**Recency-biased ranking** (prefer recent memories, with relevance as tiebreaker):
+
+```python
+results = await client.recall(
+    "Acme meeting",
+    strategies=["similarity"],
+    scoring_weights={
+        "w_relevance": 0.3,
+        "w_recency": 0.5,
+        "w_importance": 0.1,
+        "w_reinforcement": 0.1,
+    },
+)
+```
+
+**REST equivalent:**
+
+```bash
+curl -X POST http://localhost:6381/v1/memories/recall \
+  -H "Content-Type: application/json" \
+  -d '{
+    "cue": "Acme meeting",
+    "strategies": ["similarity"],
+    "scoring_weights": {
+      "w_relevance": 1.0,
+      "w_recency": 0.0,
+      "w_importance": 0.0,
+      "w_reinforcement": 0.0
+    }
+  }'
+```
+
+### Strategy Details
+
+Each result also includes `strategy_details` with per-strategy metadata. For similarity recall, this includes the raw `relevance` (cosine similarity) and `distance` values, so you can inspect the semantic match strength independently of the composite score. These are available in gRPC responses and the REST API.

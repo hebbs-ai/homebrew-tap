@@ -86,6 +86,41 @@ Recall the memory using a natural language cue:
 hebbs-cli recall "Acme meeting"
 ```
 
+You'll see output like:
+
+```
+┌──────────────────────────────────────────────────────────────────────┐
+│ #  Score   Memory ID                  Kind     Content              │
+╞══════════════════════════════════════════════════════════════════════╡
+│ 1  0.6701  01KK3S0KXYE22EFF489YR...  episode  Met with the Acme... │
+└──────────────────────────────────────────────────────────────────────┘
+```
+
+### Understanding the Score
+
+The `Score` column is a **composite score**, not raw semantic similarity. HEBBS blends four signals to rank results:
+
+| Signal | Default Weight | What it captures |
+|--------|---------------|-----------------|
+| **Relevance** | 0.5 | Cosine similarity between query and memory embeddings |
+| **Recency** | 0.2 | How recently the memory was created (decays over 30 days) |
+| **Importance** | 0.2 | The memory's importance value (default 0.5 at creation) |
+| **Reinforcement** | 0.1 | How often the memory has been recalled before |
+
+So a score of 0.67 doesn't mean weak similarity -- it means the raw cosine similarity (likely ~0.85) was blended with the other signals. A brand-new memory with default importance and no prior recalls has a theoretical maximum composite score of ~0.80.
+
+You can override these weights via `scoring_weights` in the REST API, gRPC, or Python SDK. For example, to rank purely by semantic relevance:
+
+```python
+results = await client.recall(
+    "Acme meeting",
+    strategies=["similarity"],
+    scoring_weights={"w_relevance": 1.0, "w_recency": 0.0, "w_importance": 0.0, "w_reinforcement": 0.0},
+)
+```
+
+See [Recall Strategies](/concepts/recall-strategies/) for details on the composite scoring formula and tuning strategies.
+
 ## 6. Try the Python SDK
 
 Install the Python SDK:

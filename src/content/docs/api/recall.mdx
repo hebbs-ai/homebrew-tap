@@ -22,13 +22,28 @@ The `recall` operation retrieves memories by cue, applying one or more strategie
 | `strategies` | array | Yes | One or more strategy configs: `similarity`, `temporal`, `causal`, `analogical`. |
 | `top_k` | int | No | Maximum number of results per strategy (default 10). |
 | `entity_id` | string | No | Scope recall to this entity. |
-| `scoring_weights` | map | No | Per-strategy weight for blending results (e.g., `{"similarity": 0.6, "temporal": 0.4}`). |
+| `scoring_weights` | object | No | Override composite scoring weights. Fields: `w_relevance` (default 0.5), `w_recency` (default 0.2), `w_importance` (default 0.2), `w_reinforcement` (default 0.1). |
+
+**`scoring_weights` example:**
+
+```json
+{
+  "w_relevance": 1.0,
+  "w_recency": 0.0,
+  "w_importance": 0.0,
+  "w_reinforcement": 0.0
+}
+```
+
+This ranks results purely by semantic similarity. See [Composite Scoring](/concepts/recall-strategies/#composite-scoring) for the full formula and tuning guide.
 
 ## Response
 
 | Field | Type | Description |
 |-------|------|-------------|
-| `results` | array | Each result: `memory`, `score`, `strategy_details`. |
+| `results` | array | Each result contains `memory`, `score` (composite), and `strategy_details`. |
+| `results[].score` | float | Composite score: weighted blend of relevance, recency, importance, and reinforcement. |
+| `results[].strategy_details` | array | Per-strategy metadata. For similarity: `relevance` (raw cosine similarity) and `distance`. For temporal: `timestamp` and `rank`. For causal: `depth`, `edge_type`, `seed_id`. For analogical: `embedding_similarity` and `structural_similarity`. |
 | `strategy_errors` | array | Optional errors from individual strategies (e.g., causal graph empty). |
 
 ## Strategy Configuration

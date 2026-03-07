@@ -22,7 +22,7 @@ HEBBS implements cognitive operations as **algorithms inside the engine**, not a
 
 - **Temporal decay** is an exponential function, not a summarization prompt. Memories lose importance over time; frequently recalled memories get reinforced through Hebbian learning.
 - **Importance scoring** is computed at write time and updated on every recall -- no LLM rating required.
-- **Four recall strategies** (similarity, temporal, causal, analogical) are index traversals with bounded complexity, not LLM-mediated reasoning.
+- **Four recall strategies** (similarity, temporal, causal, analogical) are index traversals with bounded complexity, not LLM-mediated reasoning. Results are ranked by a composite score that blends relevance, recency, importance, and reinforcement -- with caller-configurable weights so agents can tune for "most similar" vs "most recent and important" without extra queries.
 - **Reflection** is the only place an LLM appears, and it runs exclusively in the background. It clusters related memories, proposes insights, validates them, and stores the results -- all async, never blocking a read or write.
 - **Crash safety** comes from RocksDB's write-ahead log and atomic WriteBatch operations. Kill the process between any two instructions and the engine recovers to a consistent state.
 
