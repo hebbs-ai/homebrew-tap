@@ -1,5 +1,8 @@
 ---
 const capabilities = [
+  { name: "No LLM on hot path", hebbs: true, pgvector: true, qdrant: true, redis: true, neo4j: true, mem0: false },
+  { name: "Crash-safe atomic writes", hebbs: true, pgvector: false, qdrant: false, redis: false, neo4j: false, mem0: false },
+  { name: "p99 recall < 10ms at 10M", hebbs: true, pgvector: false, qdrant: false, redis: false, neo4j: false, mem0: false },
   { name: "Multi-strategy recall", hebbs: true, pgvector: false, qdrant: false, redis: false, neo4j: false, mem0: false },
   { name: "Native decay & reinforcement", hebbs: true, pgvector: false, qdrant: false, redis: false, neo4j: false, mem0: false },
   { name: "Background consolidation", hebbs: true, pgvector: false, qdrant: false, redis: false, neo4j: false, mem0: false },
@@ -27,7 +30,7 @@ const products = [
         Why not just use...
       </h2>
       <p class="text-muted text-lg">
-        HEBBS isn't competing with these tools. It's the primitive they're missing.
+        Same category. Different architecture.
       </p>
     </div>
 

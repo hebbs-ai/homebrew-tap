@@ -12,9 +12,12 @@
         <p class="text-muted text-lg leading-relaxed mb-6">
           Your agent's memory is 4 services, 2,000 lines of glue, and a prayer.
         </p>
-        <p class="text-muted leading-relaxed">
+        <p class="text-muted leading-relaxed mb-6">
           One retrieval mode. No decay. No consolidation. No causal reasoning.
           No temporal recall. No analogy. Just similarity search and hope.
+        </p>
+        <p class="text-muted leading-relaxed text-sm border-l-2 border-accent/40 pl-4">
+          This isn't a feature gap — it's an architectural ceiling. An LLM call per write costs 200–2000ms. A network hop to an external vector DB costs 2–20ms per read. No crash safety. No atomicity. These constraints are baked into the stack. You can't fix them without rewriting the storage layer.
         </p>
       </div>
 

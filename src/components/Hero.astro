@@ -8,36 +8,33 @@
 
   <div class="relative mx-auto max-w-4xl px-6 text-center">
     <img src="/logo-icon.svg" alt="HEBBS" class="mx-auto mb-8 w-16 h-16 rounded-2xl shadow-2xl shadow-accent/10" />
-    <h1 class="font-logo text-5xl md:text-7xl font-bold tracking-[0.06em] mb-8">
+    <h1 class="font-logo text-5xl md:text-7xl font-bold tracking-[0.06em] mb-6">
       HEBBS
     </h1>
 
-    <p class="text-xl md:text-2xl font-medium text-text/90 tracking-tight mb-12">
-      The memory primitive for AI agents.
+    <p class="text-xl md:text-2xl font-medium text-text/90 tracking-tight mb-4">
+      The memory engine for AI agents.
     </p>
 
-    <div class="inline-block rounded-xl border border-border bg-surface/60 px-8 py-5 mb-14">
-      <p class="font-mono text-sm md:text-base">
-        <span class="text-accent font-medium">384ns</span>
-        <span class="text-muted"> writes</span>
-        <span class="text-muted mx-3">&middot;</span>
-        <span class="text-accent font-medium">114ns</span>
-        <span class="text-muted"> reads</span>
-        <span class="text-muted mx-3">&middot;</span>
-        <span class="text-accent font-medium">8ms</span>
-        <span class="text-muted"> recall at </span>
-        <span class="text-accent font-medium">10M</span>
-      </p>
+    <p class="text-base md:text-lg text-muted max-w-2xl mx-auto mb-10">
+      Algorithms, not LLM wrappers. One binary. Sub-10ms recall at 10M memories.
+    </p>
+
+    <div class="inline-flex items-center rounded-xl border border-border bg-surface/60 pl-6 pr-2 py-3 mb-10 gap-3 group cursor-pointer" onclick="navigator.clipboard.writeText('curl -sSf https://hebbs.ai/install | sh')">
+      <code class="font-mono text-sm md:text-base text-muted">
+        <span class="text-accent">$</span> curl -sSf https://hebbs.ai/install | sh
+      </code>
+      <span class="rounded-lg border border-border bg-bg px-3 py-1.5 text-xs text-muted group-hover:text-text group-hover:border-muted transition-colors">
+        Copy
+      </span>
     </div>
 
-    <div class="flex items-center justify-center gap-4">
+    <div class="flex items-center justify-center gap-4 mb-14">
       <a
-        href="https://buxo.ai/parag/hebbsai-quick-chat-with-founder"
-        target="_blank"
-        rel="noopener"
+        href="https://docs.hebbs.ai"
         class="rounded-lg bg-accent px-6 py-3 text-sm font-medium text-bg hover:bg-accent/90 transition-colors"
       >
-        Talk to us
+        Read the docs
       </a>
       <a
         href="https://github.com/hebbs-ai/hebbs"
@@ -47,6 +44,18 @@
       >
         GitHub
       </a>
+    </div>
+
+    <div class="font-mono text-sm text-muted">
+      <span class="text-accent font-medium">384ns</span>
+      <span class="text-muted"> writes</span>
+      <span class="text-muted mx-3">&middot;</span>
+      <span class="text-accent font-medium">114ns</span>
+      <span class="text-muted"> reads</span>
+      <span class="text-muted mx-3">&middot;</span>
+      <span class="text-accent font-medium">8ms</span>
+      <span class="text-muted"> recall at </span>
+      <span class="text-accent font-medium">10M</span>
     </div>
   </div>
 </section>
