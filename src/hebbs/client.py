@@ -34,33 +34,46 @@ from hebbs.types import (
 )
 
 
-class _AuthMetadataInterceptor(
-    grpc.aio.UnaryUnaryClientInterceptor,
-    grpc.aio.UnaryStreamClientInterceptor,
-):
-    """Injects ``authorization: Bearer <key>`` metadata into every gRPC call."""
+def _inject_auth(
+    metadata: list[tuple[str, str]],
+    client_call_details: grpc.aio.ClientCallDetails,
+) -> grpc.aio.ClientCallDetails:
+    existing = list(client_call_details.metadata or [])
+    existing.extend(metadata)
+    return grpc.aio.ClientCallDetails(
+        method=client_call_details.method,
+        timeout=client_call_details.timeout,
+        metadata=existing,
+        credentials=client_call_details.credentials,
+        wait_for_ready=client_call_details.wait_for_ready,
+    )
+
+
+class _UnaryUnaryAuthInterceptor(grpc.aio.UnaryUnaryClientInterceptor):
+    """Injects ``authorization: Bearer <key>`` into unary-unary calls."""
 
     def __init__(self, api_key: str) -> None:
         self._metadata = [("authorization", f"Bearer {api_key}")]
 
-    def _inject(
-        self, client_call_details: grpc.aio.ClientCallDetails
-    ) -> grpc.aio.ClientCallDetails:
-        metadata = list(client_call_details.metadata or [])
-        metadata.extend(self._metadata)
-        return grpc.aio.ClientCallDetails(
-            method=client_call_details.method,
-            timeout=client_call_details.timeout,
-            metadata=metadata,
-            credentials=client_call_details.credentials,
-            wait_for_ready=client_call_details.wait_for_ready,
-        )
-
     async def intercept_unary_unary(self, continuation, client_call_details, request):
-        return await continuation(self._inject(client_call_details), request)
+        return await continuation(_inject_auth(self._metadata, client_call_details), request)
+
+
+class _UnaryStreamAuthInterceptor(grpc.aio.UnaryStreamClientInterceptor):
+    """Injects ``authorization: Bearer <key>`` into unary-stream (server-streaming) calls.
+
+    gRPC Python's async channel registers interceptors via ``isinstance``
+    with ``elif`` branches, so a single class inheriting from both
+    ``UnaryUnaryClientInterceptor`` and ``UnaryStreamClientInterceptor``
+    only gets registered for the first match. Splitting into two classes
+    ensures both call patterns receive auth metadata.
+    """
+
+    def __init__(self, api_key: str) -> None:
+        self._metadata = [("authorization", f"Bearer {api_key}")]
 
     async def intercept_unary_stream(self, continuation, client_call_details, request):
-        return await continuation(self._inject(client_call_details), request)
+        return await continuation(_inject_auth(self._metadata, client_call_details), request)
 
 
 class HebbsClient:
@@ -86,7 +99,7 @@ class HebbsClient:
         channel_options: list[tuple[str, Any]] | None = None,
     ) -> None:
         self._address = address
-        self._api_key = api_key or os.environ.get("HEBBS_API_KEY")
+        self._api_key = api_key if api_key is not None else os.environ.get("HEBBS_API_KEY")
         self._tenant_id = tenant_id
         self._channel_options = channel_options or []
         self._channel: grpc.aio.Channel | None = None
@@ -105,7 +118,8 @@ class HebbsClient:
         """Open the gRPC channel and create service stubs."""
         interceptors = []
         if self._api_key:
-            interceptors.append(_AuthMetadataInterceptor(self._api_key))
+            interceptors.append(_UnaryUnaryAuthInterceptor(self._api_key))
+            interceptors.append(_UnaryStreamAuthInterceptor(self._api_key))
 
         self._channel = grpc.aio.insecure_channel(
             self._address,

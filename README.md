@@ -154,8 +154,8 @@ Available scenarios: `discovery_call`, `objection_handling`, `multi_session`, `r
 |--------|-------------|
 | `remember(content, importance, context, entity_id)` | Store a memory |
 | `get(memory_id)` | Retrieve a memory by ID |
-| `recall(cue, strategies, top_k, entity_id)` | Multi-strategy recall |
-| `prime(entity_id, max_memories, similarity_cue)` | Session warm-up |
+| `recall(cue, strategies, top_k, entity_id, scoring_weights)` | Multi-strategy recall |
+| `prime(entity_id, max_memories, similarity_cue, scoring_weights)` | Session warm-up |
 | `revise(memory_id, content, importance, context)` | Update a memory |
 | `forget(entity_id, memory_ids)` | GDPR-compliant erasure |
 | `set_policy(...)` | Configure tenant policies |
@@ -171,6 +171,32 @@ Available scenarios: `discovery_call`, `objection_handling`, `multi_session`, `r
 - **temporal** -- time-ordered retrieval
 - **causal** -- cause-and-effect graph traversal (entity-filtered)
 - **analogical** -- cross-domain pattern matching (entity-filtered)
+
+### Scoring Weights
+
+Recall results are ranked by a composite score blending relevance, recency, importance, and reinforcement. Pass `scoring_weights` to tune the blend:
+
+```python
+from hebbs import ScoringWeights
+
+# Pure semantic match
+results = await h.recall(
+    cue="competitor pricing",
+    strategies=["similarity"],
+    scoring_weights=ScoringWeights(w_relevance=1.0, w_recency=0.0, w_importance=0.0, w_reinforcement=0.0),
+)
+
+# Recency-biased -- "what just happened?"
+results = await h.recall(
+    cue="latest updates",
+    strategies=["similarity"],
+    scoring_weights=ScoringWeights(w_relevance=0.2, w_recency=0.8, w_importance=0.0, w_reinforcement=0.0),
+)
+```
+
+Omit `scoring_weights` for the default blend (relevance 0.5, recency 0.2, importance 0.2, reinforcement 0.1). Each result includes both `score` (composite) and `relevance` (raw cosine similarity).
+
+Full documentation: [docs.hebbs.ai](https://docs.hebbs.ai)
 
 ### LLM Providers
 
