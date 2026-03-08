@@ -860,9 +860,10 @@ impl Engine {
             temporal_limit,
         )?;
 
-        let mut temporal_memories: Vec<(Memory, f32)> = Vec::with_capacity(temporal_raw.len());
+        let mut temporal_memories: Vec<(Memory, f32, u64, usize)> =
+            Vec::with_capacity(temporal_raw.len());
         let temporal_count_raw = temporal_raw.len();
-        for (i, (memory_id, _timestamp)) in temporal_raw.iter().enumerate() {
+        for (i, (memory_id, timestamp)) in temporal_raw.iter().enumerate() {
             match Self::get_from_storage(&*storage, memory_id) {
                 Ok(mem) => {
                     let relevance = if temporal_count_raw > 1 {
@@ -870,7 +871,7 @@ impl Engine {
                     } else {
                         1.0
                     };
-                    temporal_memories.push((mem, relevance));
+                    temporal_memories.push((mem, relevance, *timestamp, i));
                 }
                 Err(HebbsError::MemoryNotFound { .. }) => continue,
                 Err(e) => return Err(e),
@@ -920,7 +921,7 @@ impl Engine {
         let temporal_count;
         {
             let mut temporal_scored: Vec<RecallResult> = Vec::new();
-            for (mem, relevance) in temporal_memories.into_iter().rev() {
+            for (mem, relevance, timestamp, rank) in temporal_memories.into_iter().rev() {
                 let id_key = mem.memory_id.clone();
                 if !seen.insert(id_key) {
                     continue;
@@ -930,8 +931,8 @@ impl Engine {
                     memory: mem,
                     score,
                     strategy_details: vec![StrategyDetail::Temporal {
-                        timestamp: 0,
-                        rank: 0,
+                        timestamp,
+                        rank,
                         relevance,
                     }],
                 });
