@@ -116,11 +116,12 @@ So a score of 0.67 does not mean weak similarity. The raw cosine similarity is l
 
 ### Customizing Weights
 
-Pass `scoring_weights` to override the defaults. This works via gRPC, REST, and the Python SDK.
+Pass `scoring_weights` to override the defaults. This works via gRPC, REST, the Python SDK, and the TypeScript SDK.
 
 **Pure relevance ranking** (ignore recency, importance, reinforcement):
 
 ```python
+# Python
 results = await client.recall(
     "Acme meeting",
     strategies=["similarity"],
@@ -133,9 +134,19 @@ results = await client.recall(
 )
 ```
 
+```typescript
+// TypeScript
+const results = await client.recall({
+    cue: 'Acme meeting',
+    strategies: ['similarity'],
+    scoringWeights: { wRelevance: 1.0, wRecency: 0.0, wImportance: 0.0, wReinforcement: 0.0 },
+});
+```
+
 **Recency-biased ranking** (prefer recent memories, with relevance as tiebreaker):
 
 ```python
+# Python
 results = await client.recall(
     "Acme meeting",
     strategies=["similarity"],
@@ -146,6 +157,15 @@ results = await client.recall(
         "w_reinforcement": 0.1,
     },
 )
+```
+
+```typescript
+// TypeScript
+const results = await client.recall({
+    cue: 'Acme meeting',
+    strategies: ['similarity'],
+    scoringWeights: { wRelevance: 0.3, wRecency: 0.5, wImportance: 0.1, wReinforcement: 0.1 },
+});
 ```
 
 **REST equivalent:**

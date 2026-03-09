@@ -1,0 +1,180 @@
+---
+title: "Error Handling"
+description: "Handle HEBBS errors gracefully in TypeScript."
+---
+
+The HEBBS TypeScript SDK provides a structured error hierarchy that maps gRPC status codes to meaningful error classes. All errors extend `HebbsError`, which itself extends the native `Error` class.
+
+## Error Hierarchy
+
+```
+HebbsError
+├── HebbsConnectionError        # Failed to connect or lost connection
+├── HebbsTimeoutError            # Operation exceeded deadline
+├── HebbsNotFoundError           # Memory or entity not found
+├── HebbsUnavailableError        # Server temporarily unavailable
+├── HebbsInvalidArgumentError    # Bad request parameters
+├── HebbsAuthenticationError     # Missing or invalid API key
+├── HebbsPermissionDeniedError   # Insufficient permissions
+├── HebbsRateLimitError          # Resource exhausted
+└── HebbsInternalError           # Server-side error
+```
+
+## Error Details
+
+### HebbsError
+
+Base class for all HEBBS exceptions. Every error has a `message` and `name` property inherited from `Error`.
+
+### HebbsConnectionError
+
+Thrown when the client cannot establish or maintain a connection to the server, or when methods are called before `connect()`.
+
+**Common causes:** Server not running, incorrect address, network partition, calling methods without `connect()`.
+
+### HebbsTimeoutError
+
+Thrown when an operation exceeds its deadline.
+
+**Common causes:** Server overloaded, network latency, operation timeout set too low.
+
+### HebbsNotFoundError
+
+Thrown when a requested memory or entity does not exist.
+
+**Common causes:** Invalid memory ID, memory was deleted via `forget()`.
+
+### HebbsUnavailableError
+
+Thrown when the server is temporarily unable to handle the request.
+
+**Common causes:** Server starting up, compaction in progress, resource exhaustion.
+
+### HebbsInvalidArgumentError
+
+Thrown when request parameters fail validation.
+
+**Common causes:** Empty content, invalid entity name, unknown recall strategy.
+
+### HebbsAuthenticationError
+
+Thrown when the API key is missing or invalid.
+
+**Common causes:** No API key provided, expired API key, malformed key.
+
+### HebbsPermissionDeniedError
+
+Thrown when the API key does not have sufficient permissions.
+
+**Common causes:** Cross-tenant access attempt, restricted operation.
+
+### HebbsRateLimitError
+
+Thrown when rate limits are exceeded.
+
+**Common causes:** Too many requests, resource quotas exhausted.
+
+### HebbsInternalError
+
+Thrown when the server encounters an unexpected error.
+
+**Common causes:** Storage corruption, embedding model failure, internal bug.
+
+## Handling Errors
+
+### Basic Pattern
+
+```typescript
+import { HebbsClient, HebbsNotFoundError, HebbsError } from '@hebbs/sdk';
+
+const client = new HebbsClient('localhost:6380');
+await client.connect();
+
+try {
+  const memory = await client.get(Buffer.alloc(16));
+} catch (err) {
+  if (err instanceof HebbsNotFoundError) {
+    console.log('Memory not found — it may have been deleted');
+  } else if (err instanceof HebbsError) {
+    console.log(`HEBBS error: ${err.message}`);
+  }
+}
+
+await client.close();
+```
+
+### Retry Pattern
+
+For transient errors like timeouts and unavailability, implement exponential backoff:
+
+```typescript
+import {
+  HebbsClient,
+  HebbsTimeoutError,
+  HebbsUnavailableError,
+} from '@hebbs/sdk';
+
+async function recallWithRetry(
+  client: HebbsClient,
+  query: string,
+  entity: string,
+  maxRetries = 3,
+) {
+  for (let attempt = 0; attempt < maxRetries; attempt++) {
+    try {
+      return await client.recall({ cue: query, entityId: entity });
+    } catch (err) {
+      if (
+        (err instanceof HebbsTimeoutError ||
+          err instanceof HebbsUnavailableError) &&
+        attempt < maxRetries - 1
+      ) {
+        const waitMs = 2 ** attempt * 1000;
+        await new Promise((r) => setTimeout(r, waitMs));
+        continue;
+      }
+      throw err;
+    }
+  }
+}
+```
+
+### Connection Recovery
+
+For long-running applications, handle connection errors at the application level:
+
+```typescript
+import { HebbsClient, HebbsConnectionError } from '@hebbs/sdk';
+
+async function runAgent() {
+  while (true) {
+    const client = new HebbsClient('localhost:6380');
+    try {
+      await client.connect();
+      await agentLoop(client);
+    } catch (err) {
+      if (err instanceof HebbsConnectionError) {
+        console.log('Lost connection, reconnecting in 5s...');
+        await new Promise((r) => setTimeout(r, 5000));
+      } else {
+        throw err;
+      }
+    } finally {
+      await client.close();
+    }
+  }
+}
+```
+
+## gRPC Status Code Mapping
+
+| gRPC Code | TypeScript Error |
+|---|---|
+| `UNAVAILABLE` | `HebbsUnavailableError` |
+| `DEADLINE_EXCEEDED` | `HebbsTimeoutError` |
+| `NOT_FOUND` | `HebbsNotFoundError` |
+| `INVALID_ARGUMENT` | `HebbsInvalidArgumentError` |
+| `UNAUTHENTICATED` | `HebbsAuthenticationError` |
+| `PERMISSION_DENIED` | `HebbsPermissionDeniedError` |
+| `RESOURCE_EXHAUSTED` | `HebbsRateLimitError` |
+| `INTERNAL` | `HebbsInternalError` |

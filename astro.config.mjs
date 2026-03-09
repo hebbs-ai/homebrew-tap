@@ -129,6 +129,27 @@ localStorage.setItem('starlight-theme', 'dark');`,
           ],
         },
         {
+          label: "TypeScript SDK",
+          items: [
+            { label: "Overview", slug: "typescript/overview" },
+            { label: "Installation", slug: "typescript/installation" },
+            { label: "Quick Start", slug: "typescript/quickstart" },
+            {
+              label: "Client Reference",
+              slug: "typescript/client-reference",
+            },
+            {
+              label: "Types Reference",
+              slug: "typescript/types-reference",
+            },
+            { label: "Error Handling", slug: "typescript/error-handling" },
+            {
+              label: "Subscribe Streaming",
+              slug: "typescript/subscribe-streaming",
+            },
+          ],
+        },
+        {
           label: "CLI",
           items: [
             { label: "Overview", slug: "cli/overview" },

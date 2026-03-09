@@ -1,0 +1,325 @@
+---
+title: "Client Reference"
+description: "Complete reference for HebbsClient methods in the TypeScript SDK."
+---
+
+## HebbsClient
+
+The primary interface for interacting with a HEBBS server. All methods return Promises.
+
+### Constructor
+
+```typescript
+new HebbsClient(
+  address?: string,
+  options?: HebbsClientOptions,
+)
+```
+
+| Parameter | Type | Description |
+|---|---|---|
+| `address` | `string` | Server gRPC address in `host:port` format. Default: `localhost:6380`. |
+| `options.apiKey` | `string \| undefined` | API key for authentication (`hb_...`). Falls back to `process.env.HEBBS_API_KEY` if not provided. |
+| `options.tenantId` | `string \| undefined` | Explicit tenant ID. Normally derived from the API key by the server. |
+| `options.channelOptions` | `Record<string, unknown> \| undefined` | Additional gRPC channel options. |
+
+Call `connect()` to open the channel, and `close()` when done:
+
+```typescript
+const client = new HebbsClient('localhost:6380', { apiKey: 'hb_...' });
+await client.connect();
+// ... use client ...
+await client.close();
+```
+
+---
+
+### Core Operations
+
+#### `remember(params: RememberParams): Promise<Memory>`
+
+Store a new memory in the engine.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `content` | `string` | The memory content to store |
+| `importance` | `number \| undefined` | Importance score (0.0--1.0). Default: engine-assigned. |
+| `context` | `Record<string, unknown> \| undefined` | Structured key-value metadata (used by analogical recall for structural matching) |
+| `entityId` | `string \| undefined` | Entity scope for the memory |
+| `edges` | `Edge[] \| undefined` | Relationships to other memories (e.g. `FOLLOWED_BY`, `CAUSED_BY`) |
+
+**Returns:** `Memory`
+
+```typescript
+import { EdgeType } from '@hebbs/sdk';
+
+const mem1 = await client.remember({
+  content: 'CTO expressed interest in our API',
+  entityId: 'initech',
+});
+
+const mem2 = await client.remember({
+  content: 'Requested a technical deep-dive meeting',
+  entityId: 'initech',
+  edges: [{
+    targetId: mem1.id,
+    edgeType: EdgeType.FOLLOWED_BY,
+    confidence: 0.95,
+  }],
+});
+```
+
+Also supports positional arguments: `remember(content, importance?, context?, entityId?, edges?)`.
+
+---
+
+#### `get(memoryId: Buffer): Promise<Memory>`
+
+Retrieve a single memory by its ID.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `memoryId` | `Buffer` | The 16-byte memory identifier |
+
+**Returns:** `Memory`
+
+**Throws:** `HebbsNotFoundError` if the memory does not exist.
+
+---
+
+#### `recall(params: RecallParams): Promise<RecallOutput>`
+
+Query the engine for relevant memories using one or more recall strategies.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `cue` | `string` | Natural language query |
+| `strategies` | `(string \| RecallStrategyConfig)[] \| undefined` | One or more strategy names or config objects. You can mix both. Default: `['similarity']`. |
+| `topK` | `number \| undefined` | Maximum number of results. Default: `10`. |
+| `entityId` | `string \| undefined` | Entity scope to search within |
+| `scoringWeights` | `ScoringWeights \| undefined` | Override composite scoring weights. Default: `(0.5, 0.2, 0.2, 0.1)`. |
+| `cueContext` | `Record<string, unknown> \| undefined` | Structured context for analogical recall's structural similarity matching. Not stored. |
+
+**Returns:** `RecallOutput`
+
+Each result includes both `score` (composite) and per-strategy `strategyDetails` with raw `relevance`.
+
+**Basic usage** — pass strategy names as strings:
+
+```typescript
+const results = await client.recall({
+  cue: 'Acme meeting',
+  strategies: ['similarity'],
+  entityId: 'acme',
+});
+```
+
+**Multi-strategy** — combine strategies:
+
+```typescript
+const results = await client.recall({
+  cue: 'What is Initech doing?',
+  strategies: ['similarity', 'temporal'],
+  entityId: 'initech',
+  topK: 5,
+});
+```
+
+**Advanced usage** — per-strategy tuning with `RecallStrategyConfig`:
+
+```typescript
+import { EdgeType } from '@hebbs/sdk';
+
+const results = await client.recall({
+  cue: 'What led to the pricing pushback?',
+  strategies: [{
+    strategy: 'causal',
+    seedMemoryId: seed.id,
+    maxDepth: 3,
+    edgeTypes: [EdgeType.CAUSED_BY, EdgeType.FOLLOWED_BY],
+  }],
+});
+```
+
+**Mixed** — strings and configs together:
+
+```typescript
+const results = await client.recall({
+  cue: 'Initech evaluation',
+  strategies: [
+    'temporal',
+    { strategy: 'similarity', topK: 3, efSearch: 200 },
+  ],
+  entityId: 'initech',
+});
+```
+
+Also supports positional arguments: `recall(cue, strategies?, topK?, entityId?, scoringWeights?, cueContext?)`.
+
+#### RecallStrategyConfig
+
+Per-strategy tuning parameters. All fields except `strategy` are optional and use smart engine defaults. Most users never need this — pass strategy names as strings instead.
+
+| Field | Type | Default | Used By | Description |
+|---|---|---|---|---|
+| `strategy` | `string` | *(required)* | all | `'similarity'`, `'temporal'`, `'causal'`, or `'analogical'` |
+| `entityId` | `string \| undefined` | `undefined` | all | Override entity scope for this strategy |
+| `topK` | `number \| undefined` | `undefined` | all | Per-strategy result limit |
+| `efSearch` | `number \| undefined` | `50` | similarity | HNSW candidate count. Higher = more accurate, slower. |
+| `timeRange` | `[number, number] \| undefined` | `undefined` | temporal | `[startUs, endUs]` in microseconds. Unbounded when omitted. |
+| `seedMemoryId` | `Buffer \| undefined` | `undefined` | causal | Starting node for graph traversal. Auto-detected when omitted. |
+| `maxDepth` | `number \| undefined` | `5` | causal | Max hops in traversal. Hard cap: 10. |
+| `edgeTypes` | `EdgeType[] \| undefined` | `undefined` | causal | Restrict traversal to specific edge types. All types when omitted. |
+| `analogicalAlpha` | `number \| undefined` | `0.5` | analogical | Blend weight: `0.0` = pure structural similarity, `1.0` = pure embedding similarity. |
+
+---
+
+#### `prime(params: PrimeParams): Promise<PrimeOutput>`
+
+Pre-load session context for an entity, blending temporal and similarity recall.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `entityId` | `string` | Entity whose context to load |
+| `maxMemories` | `number \| undefined` | Maximum total memories to return. Default: `20`. |
+| `similarityCue` | `string \| undefined` | Optional cue for the similarity component. When omitted, the engine builds a synthetic cue from entity history. |
+| `scoringWeights` | `ScoringWeights \| undefined` | Override composite scoring weights. |
+
+**Returns:** `PrimeOutput` (includes `results`, `temporalCount`, `similarityCount`)
+
+```typescript
+const prime = await client.prime({
+  entityId: 'initech',
+  maxMemories: 50,
+  similarityCue: 'enterprise evaluation',
+});
+console.log(`Temporal: ${prime.temporalCount}, Similarity: ${prime.similarityCount}`);
+```
+
+Also supports positional arguments: `prime(entityId, maxMemories?, similarityCue?, scoringWeights?)`.
+
+---
+
+#### `revise(memoryId: Buffer, params: ReviseParams): Promise<Memory>`
+
+Update an existing memory. The memory's `kind` changes to `revision`.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `memoryId` | `Buffer` | ID of the memory to revise |
+| `params.content` | `string \| undefined` | Updated content |
+| `params.importance` | `number \| undefined` | Updated importance score |
+| `params.context` | `Record<string, unknown> \| undefined` | Updated context metadata |
+| `params.entityId` | `string \| undefined` | Updated entity scope |
+
+**Returns:** `Memory` (the revised version)
+
+```typescript
+const revised = await client.revise(mem.id, {
+  content: 'Deal size expanded to 350 seats',
+  importance: 0.95,
+  context: { deal_size: '350 seats', stage: 'negotiation' },
+});
+```
+
+---
+
+#### `forget(params: ForgetParams): Promise<ForgetResult>`
+
+Erase memories permanently (GDPR-compliant cryptographic erasure). Pass `entityId` for entity-wide deletion, or `memoryIds` for targeted deletion.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `entityId` | `string \| undefined` | Delete all memories for this entity |
+| `memoryIds` | `Buffer[] \| undefined` | Specific memory IDs to delete |
+
+**Returns:** `ForgetResult` (includes `forgottenCount`, `cascadeCount`, `tombstoneCount`)
+
+```typescript
+// Forget everything for an entity
+const result = await client.forget({ entityId: 'gdpr-user-123' });
+
+// Forget specific memories
+const result = await client.forget({ memoryIds: [mem1.id, mem2.id] });
+```
+
+---
+
+### Policy and Reflection
+
+#### `setPolicy(params: SetPolicyParams): Promise<boolean>`
+
+Configure tenant-level policy parameters.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `maxSnapshotsPerMemory` | `number \| undefined` | Maximum revision snapshots to retain per memory |
+| `autoForgetThreshold` | `number \| undefined` | Decay score below which memories are auto-forgotten |
+| `decayHalfLifeDays` | `number \| undefined` | Half-life for memory decay in days |
+
+**Returns:** `boolean` (`true` on success)
+
+---
+
+#### `reflect(params?: ReflectParams): Promise<ReflectResult>`
+
+Trigger the reflection pipeline to generate insights from memory clusters. Uses the LLM configured on the server (e.g. OpenAI GPT-4o).
+
+| Parameter | Type | Description |
+|---|---|---|
+| `entityId` | `string \| undefined` | Scope reflection to a specific entity. All entities when omitted. |
+
+**Returns:** `ReflectResult` (includes `insightsCreated`, `clustersFound`, `clustersProcessed`, `memoriesProcessed`)
+
+---
+
+#### `insights(params?: InsightsParams): Promise<Memory[]>`
+
+Retrieve insights generated by the reflection pipeline.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `entityId` | `string \| undefined` | Filter insights by entity |
+| `maxResults` | `number \| undefined` | Maximum number of insights to return |
+
+**Returns:** `Memory[]` (insights are stored as `kind = MemoryKind.INSIGHT` memories)
+
+---
+
+### Streaming
+
+#### `subscribe(params?: SubscribeParams): Promise<Subscription>`
+
+Open a real-time subscription for memory surfacing.
+
+| Parameter | Type | Description |
+|---|---|---|
+| `entityId` | `string \| undefined` | Entity scope |
+| `confidenceThreshold` | `number` | Minimum confidence for pushes. Default: `0.5`. |
+
+**Returns:** `Subscription`
+
+The `Subscription` object supports:
+- `feed(text)` — send text to the stream for matching
+- `close()` — close the subscription
+- Async iteration — `for await (const push of sub)` to receive `SubscribePush` events
+
+See [Subscribe Streaming](/typescript/subscribe-streaming/) for full usage.
+
+---
+
+### Health
+
+#### `health(): Promise<HealthStatus>`
+
+Check server health and readiness. This endpoint does not require authentication.
+
+**Returns:** `HealthStatus` (includes `serving`, `version`, `memoryCount`, `uptimeSeconds`)
+
+---
+
+#### `count(): Promise<number>`
+
+Return the total number of memories stored (via the health endpoint).
+
+**Returns:** `number`

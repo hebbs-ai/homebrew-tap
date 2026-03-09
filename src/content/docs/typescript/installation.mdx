@@ -1,0 +1,62 @@
+---
+title: "TypeScript SDK Installation"
+description: "Install the HEBBS TypeScript SDK."
+---
+
+## Requirements
+
+- **Node.js 18 or later** — the SDK targets ES2022 and uses modern Node.js APIs.
+- A running HEBBS server to connect to (see [Deployment](/deployment/overview/)).
+
+## Install with npm
+
+```bash
+npm install @hebbs/sdk
+```
+
+To pin to a specific version:
+
+```bash
+npm install @hebbs/sdk@0.1.0
+```
+
+## Install with pnpm
+
+```bash
+pnpm add @hebbs/sdk
+```
+
+## Install with yarn
+
+```bash
+yarn add @hebbs/sdk
+```
+
+## Verify Installation
+
+```typescript
+import { HebbsClient } from '@hebbs/sdk';
+console.log('SDK loaded successfully');
+```
+
+## Dependencies
+
+The SDK has two runtime dependencies, both installed automatically:
+
+| Package | Purpose |
+|---|---|
+| `@grpc/grpc-js` | Pure-JavaScript gRPC implementation (no native addons) |
+| `@grpc/proto-loader` | Runtime protobuf parsing from the shipped `.proto` file |
+
+## Supported Platforms
+
+The SDK is a pure-JavaScript package (ESM) and supports all platforms where Node.js 18+ runs:
+
+- Linux (x86_64, aarch64)
+- macOS (x86_64, Apple Silicon)
+- Windows (x86_64)
+
+## Next Steps
+
+- [Quick Start](/typescript/quickstart/) — connect to HEBBS and run your first operations
+- [Client Reference](/typescript/client-reference/) — full API documentation

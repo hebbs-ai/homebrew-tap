@@ -5,30 +5,46 @@ description: "Build a simple memory-augmented agent from scratch."
 
 This cookbook walks you through building a minimal AI agent that uses HEBBS for persistent memory. By the end, you'll have an agent that remembers across conversations and retrieves relevant context automatically.
 
+Examples are provided in both Python and TypeScript. Pick whichever you prefer — the API is nearly identical.
+
 ## Prerequisites
 
-- HEBBS server running locally (`localhost:50051`)
-- Python SDK installed: `pip install hebbs`
+- HEBBS server running locally (`localhost:6380`)
+- **Python**: `pip install hebbs`
+- **TypeScript**: `npm install @hebbs/sdk`
 
 ## Step 1: Connect to HEBBS
 
 ```python
+# Python
 import asyncio
 from hebbs import HebbsClient
 
 async def main():
-    async with HebbsClient.connect("localhost:50051") as client:
+    async with HebbsClient.connect("localhost:6380") as client:
         health = await client.health()
         print(f"Connected to HEBBS {health.version} ({health.status})")
 
 asyncio.run(main())
 ```
 
+```typescript
+// TypeScript
+import { HebbsClient } from '@hebbs/sdk';
+
+const client = new HebbsClient('localhost:6380', { apiKey: process.env.HEBBS_API_KEY });
+await client.connect();
+
+const health = await client.health();
+console.log(`Connected to HEBBS ${health.version} (${health.serving ? 'serving' : 'not serving'})`);
+```
+
 ## Step 2: Store Memories
 
-Let's store a few memories representing a conversation with a customer:
+Store a few memories representing a conversation with a customer:
 
 ```python
+# Python
 from hebbs import MemoryKind
 
 memories_to_store = [
@@ -48,6 +64,22 @@ for content, kind in memories_to_store:
     print(f"Stored [{memory.kind.name}]: {memory.content[:50]}...")
 ```
 
+```typescript
+// TypeScript
+const memoriesToStore = [
+    { content: "Met with Acme Corp CEO. They're expanding to Europe.", entityId: 'acme-corp' },
+    { content: "Acme Corp's budget for Q2 is $500K.", entityId: 'acme-corp' },
+    { content: 'Always send Acme Corp proposals in PDF format.', entityId: 'acme-corp' },
+    { content: "Acme's CTO is skeptical about cloud solutions.", entityId: 'acme-corp' },
+    { content: 'GDPR compliance is a hard requirement for Acme.', entityId: 'acme-corp' },
+];
+
+for (const params of memoriesToStore) {
+    const memory = await client.remember(params);
+    console.log(`Stored [${memory.kind}]: ${memory.content.slice(0, 50)}...`);
+}
+```
+
 ## Step 3: Recall with Different Strategies
 
 ### Similarity Recall
@@ -55,6 +87,7 @@ for content, kind in memories_to_store:
 Find memories semantically related to a query:
 
 ```python
+# Python
 results = await client.recall(
     query="What do I need to know about Acme's European plans?",
     entity="acme-corp",
@@ -67,11 +100,27 @@ for r in results.memories:
     print(f"  [{r.score:.3f}] {r.memory.content}")
 ```
 
+```typescript
+// TypeScript
+const results = await client.recall({
+    cue: "What do I need to know about Acme's European plans?",
+    entityId: 'acme-corp',
+    strategies: ['similarity'],
+    topK: 3,
+});
+
+console.log('Similarity recall:');
+for (const r of results.results) {
+    console.log(`  [${r.score.toFixed(3)}] ${r.memory.content}`);
+}
+```
+
 ### Temporal Recall
 
 Find the most recent memories:
 
 ```python
+# Python
 temporal = await client.recall(
     query="What happened recently with Acme?",
     entity="acme-corp",
@@ -84,13 +133,28 @@ for r in temporal.memories:
     print(f"  [{r.memory.created_at}] {r.memory.content}")
 ```
 
+```typescript
+// TypeScript
+const temporal = await client.recall({
+    cue: 'What happened recently with Acme?',
+    entityId: 'acme-corp',
+    strategies: ['temporal'],
+    topK: 3,
+});
+
+console.log('\nTemporal recall:');
+for (const r of temporal.results) {
+    console.log(`  [${r.memory.createdAt}] ${r.memory.content}`);
+}
+```
+
 ## Step 4: Build the Agent Loop
 
 Combine storage and recall into a simple agent:
 
 ```python
+# Python
 async def agent_turn(client, entity, user_message):
-    # Recall relevant context
     context = await client.recall(
         query=user_message,
         entity=entity,
@@ -99,7 +163,6 @@ async def agent_turn(client, entity, user_message):
         threshold=0.6,
     )
 
-    # Format context for the LLM
     memory_context = "\n".join(
         f"- {r.memory.content}" for r in context.memories
     )
@@ -110,7 +173,6 @@ async def agent_turn(client, entity, user_message):
     # Here you would call your LLM with the context + user message
     # response = await llm.generate(prompt=f"Context:\n{memory_context}\n\nUser: {user_message}")
 
-    # Store the interaction as a new memory
     await client.remember(
         content=f"User asked: {user_message}",
         entity=entity,
@@ -118,20 +180,58 @@ async def agent_turn(client, entity, user_message):
     )
 ```
 
-## Step 5: Display Results
+```typescript
+// TypeScript
+async function agentTurn(client: HebbsClient, entity: string, userMessage: string) {
+    const context = await client.recall({
+        cue: userMessage,
+        entityId: entity,
+        strategies: ['similarity'],
+        topK: 3,
+    });
+
+    const memoryContext = context.results
+        .map(r => `- ${r.memory.content}`)
+        .join('\n');
+
+    console.log(`Retrieved ${context.results.length} relevant memories`);
+    console.log(`Context:\n${memoryContext}`);
+
+    // Here you would call your LLM with the context + user message
+    // const response = await llm.generate({ prompt: `Context:\n${memoryContext}\n\nUser: ${userMessage}` });
+
+    await client.remember({
+        content: `User asked: ${userMessage}`,
+        entityId: entity,
+    });
+}
+```
+
+## Step 5: Run the Agent
 
 ```python
-async with HebbsClient.connect("localhost:50051") as client:
-    # Store initial memories
-    # ... (step 2)
+# Python
+async with HebbsClient.connect("localhost:6380") as client:
+    # Store initial memories (step 2) ...
 
-    # Run agent turns
     await agent_turn(client, "acme-corp", "What should I know before the Acme meeting?")
     await agent_turn(client, "acme-corp", "How should I address their cloud concerns?")
 
-    # Check total memory count
     count = await client.count("acme-corp")
     print(f"\nTotal memories for acme-corp: {count}")
+```
+
+```typescript
+// TypeScript
+// Store initial memories (step 2) ...
+
+await agentTurn(client, 'acme-corp', 'What should I know before the Acme meeting?');
+await agentTurn(client, 'acme-corp', 'How should I address their cloud concerns?');
+
+const count = await client.count();
+console.log(`\nTotal memories: ${count}`);
+
+await client.close();
 ```
 
 ## What's Next

@@ -1,0 +1,59 @@
+---
+title: "TypeScript SDK Overview"
+description: "Async Node.js gRPC client for HEBBS with a type-safe API."
+---
+
+The `@hebbs/sdk` package provides an async gRPC client for the HEBBS cognitive memory engine. It wraps the underlying protobuf transport in a clean, idiomatic TypeScript interface — no protobuf types appear in the public API.
+
+## Key Features
+
+- **Fully async** — every method returns a `Promise`. Streaming uses `AsyncIterable`.
+- **Type-safe** — all request and response objects are TypeScript interfaces with `readonly` fields and full IDE autocompletion.
+- **Node.js native** — built on `@grpc/grpc-js`. No browser runtime, no REST fallback. Optimized for server-side performance.
+- **Streaming** — the `subscribe()` method returns a `Subscription` that implements `AsyncIterable<SubscribePush>` for real-time memory surfacing.
+- **Zero codegen** — ships the `.proto` file and uses `@grpc/proto-loader` at runtime. No build step required for consumers.
+
+## Quick Example
+
+```typescript
+import { HebbsClient, MemoryKind } from '@hebbs/sdk';
+
+const client = new HebbsClient('localhost:6380', {
+  apiKey: process.env.HEBBS_API_KEY,
+});
+await client.connect();
+
+await client.remember({
+  content: 'Customer prefers email over phone',
+  entityId: 'customer-42',
+});
+
+const { results } = await client.recall({
+  cue: 'How does the customer prefer to be contacted?',
+  entityId: 'customer-42',
+});
+
+for (const r of results) {
+  console.log(`${r.memory.content} (score: ${r.score.toFixed(3)})`);
+}
+
+await client.close();
+```
+
+## Package Structure
+
+| Module | Purpose |
+|---|---|
+| `HebbsClient` | The main entry point — connect, call methods, close |
+| `types` | All data types (`Memory`, `RecallResult`, `Edge`, etc.) |
+| `errors` | Exception hierarchy (`HebbsError` and subclasses) |
+| `Subscription` | `AsyncIterable` for real-time streaming |
+
+## Next Steps
+
+- [Installation](/typescript/installation/) — install the package with npm
+- [Quick Start](/typescript/quickstart/) — connect and run your first operations
+- [Client Reference](/typescript/client-reference/) — complete method documentation
+- [Types Reference](/typescript/types-reference/) — all data types
+- [Error Handling](/typescript/error-handling/) — exception hierarchy and retry patterns
+- [Subscribe Streaming](/typescript/subscribe-streaming/) — real-time memory surfacing

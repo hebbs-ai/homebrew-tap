@@ -1,0 +1,121 @@
+---
+title: "Subscribe Streaming"
+description: "Real-time memory surfacing with the TypeScript SDK."
+---
+
+The `subscribe()` method opens a bidirectional gRPC stream that surfaces relevant memories in real-time as new context is fed into the conversation. This enables agents to receive memory pushes without polling.
+
+## Opening a Subscription
+
+```typescript
+import { HebbsClient } from '@hebbs/sdk';
+
+const client = new HebbsClient('localhost:6380');
+await client.connect();
+
+const subscription = await client.subscribe({
+  entityId: 'customer-42',
+  confidenceThreshold: 0.7,
+});
+```
+
+The returned `Subscription` object manages the stream lifecycle and implements `AsyncIterable<SubscribePush>`.
+
+## Feeding Context
+
+Use `feed()` to send new text into the subscription. HEBBS evaluates it against the memory store and pushes back any relevant memories:
+
+```typescript
+await subscription.feed('The customer asked about GDPR compliance');
+```
+
+Each `feed()` call triggers a server-side recall against the entity's memory store. If relevant memories are found above the threshold, they are pushed back through the stream.
+
+## Receiving Pushes
+
+### Async Iteration
+
+The `Subscription` object is an `AsyncIterable`. Each yielded item is a `SubscribePush`:
+
+```typescript
+for await (const push of subscription) {
+  console.log(`Memory: ${push.memory.content}`);
+  console.log(`Confidence: ${push.confidence.toFixed(3)}`);
+}
+```
+
+### Manual Drain
+
+For more control, combine with a timeout or break condition:
+
+```typescript
+const timeout = setTimeout(() => subscription.close(), 5000);
+
+for await (const push of subscription) {
+  console.log(`[${push.sequenceNumber}] ${push.memory.content}`);
+  if (push.confidence > 0.9) {
+    break;
+  }
+}
+
+clearTimeout(timeout);
+```
+
+## Lifecycle Management
+
+### Closing the Subscription
+
+```typescript
+await subscription.close();
+```
+
+The subscription should always be closed when no longer needed to free server resources.
+
+### Checking Status
+
+```typescript
+if (subscription.isActive) {
+  await subscription.feed('more context');
+}
+```
+
+## Full Agent Example
+
+```typescript
+import { HebbsClient } from '@hebbs/sdk';
+
+async function agentWithMemory(userMessages: string[]) {
+  const client = new HebbsClient('localhost:6380');
+  await client.connect();
+
+  const sub = await client.subscribe({
+    entityId: 'session-123',
+    confidenceThreshold: 0.65,
+  });
+
+  // Background listener for memory pushes
+  const pushes: string[] = [];
+  const listener = (async () => {
+    for await (const push of sub) {
+      pushes.push(push.memory.content);
+      console.log(`Memory surfaced: ${push.memory.content}`);
+    }
+  })();
+
+  // Feed user messages into the stream
+  for (const message of userMessages) {
+    await sub.feed(message);
+    await new Promise((r) => setTimeout(r, 100));
+  }
+
+  await sub.close();
+  await listener;
+  await client.close();
+}
+```
+
+## Performance Considerations
+
+- Each `feed()` triggers a server-side recall. Avoid feeding every keystroke — debounce to sentence or utterance boundaries.
+- The `confidenceThreshold` parameter controls push frequency. Higher thresholds (0.8+) produce fewer, higher-relevance pushes.
+- The subscription uses a server-side streaming RPC under the hood. The client buffers messages internally and yields them via the async iterator.

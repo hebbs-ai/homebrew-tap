@@ -1,0 +1,90 @@
+---
+title: "TypeScript SDK Quick Start"
+description: "Connect to HEBBS and perform your first operations in TypeScript."
+---
+
+This guide walks you through connecting to a HEBBS server, storing memories, and recalling them — all in under 30 lines of TypeScript.
+
+## Prerequisites
+
+- HEBBS TypeScript SDK installed (`npm install @hebbs/sdk`)
+- A running HEBBS server (default: `localhost:6380`)
+- Your API key exported: `export HEBBS_API_KEY="hb_..."`
+
+## Full Example
+
+```typescript
+import { HebbsClient, MemoryKind } from '@hebbs/sdk';
+
+const client = new HebbsClient('localhost:6380', {
+  apiKey: process.env.HEBBS_API_KEY,
+});
+await client.connect();
+
+// Check server health
+const health = await client.health();
+console.log(`Server status: ${health.serving ? 'serving' : 'not serving'}`);
+
+// Store some memories
+const m1 = await client.remember({
+  content: 'Customer mentioned they are expanding to Europe next quarter',
+  entityId: 'acme-corp',
+  kind: MemoryKind.EPISODIC,
+});
+console.log(`Stored memory: ${m1.id.toString('hex')}`);
+
+const m2 = await client.remember({
+  content: 'GDPR compliance is their top concern for the expansion',
+  entityId: 'acme-corp',
+  kind: MemoryKind.EPISODIC,
+});
+console.log(`Stored memory: ${m2.id.toString('hex')}`);
+
+const m3 = await client.remember({
+  content: 'European expansion requires GDPR compliance as a prerequisite',
+  entityId: 'acme-corp',
+  kind: MemoryKind.SEMANTIC,
+});
+console.log(`Stored memory: ${m3.id.toString('hex')}`);
+
+// Recall by similarity
+const results = await client.recall({
+  cue: 'What are the customer plans for Europe?',
+  entityId: 'acme-corp',
+  strategies: ['similarity'],
+  topK: 5,
+});
+
+console.log(`\nRecall returned ${results.results.length} memories:`);
+for (const r of results.results) {
+  console.log(`  [${r.score.toFixed(3)}] ${r.memory.content}`);
+}
+
+// Recall by temporal proximity
+const temporal = await client.recall({
+  cue: 'What happened recently with this customer?',
+  entityId: 'acme-corp',
+  strategies: ['temporal'],
+  topK: 5,
+});
+
+console.log(`\nTemporal recall returned ${temporal.results.length} memories:`);
+for (const r of temporal.results) {
+  console.log(`  [${r.memory.createdAt}] ${r.memory.content}`);
+}
+
+await client.close();
+```
+
+## What Just Happened
+
+1. **Connect** — `new HebbsClient()` creates the client, and `connect()` establishes the gRPC channel. Call `close()` when done.
+2. **Remember** — each `remember()` call stores a memory in the engine. HEBBS automatically embeds the content, indexes it across vector, temporal, and graph indexes, and returns the stored memory with its assigned ID.
+3. **Recall** — `recall()` queries the engine using one of four strategies: `similarity`, `temporal`, `causal`, or `analogical`. Results include relevance scores and metadata.
+
+## Next Steps
+
+- [Client Reference](/typescript/client-reference/) — explore all available methods
+- [Types Reference](/typescript/types-reference/) — understand the data model
+- [Error Handling](/typescript/error-handling/) — handle failures gracefully
+- [Multi-Strategy Recall](/cookbooks/multi-strategy-recall/) — compare all four recall strategies
