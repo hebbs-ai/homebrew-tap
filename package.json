@@ -25,7 +25,12 @@
     "test:integration": "vitest run tests/integration",
     "test:e2e": "tsx tests/e2e/e2e.test.ts",
     "lint": "tsc --noEmit",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
   },
   "dependencies": {
     "@grpc/grpc-js": "^1.12.0",
