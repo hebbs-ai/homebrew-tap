@@ -119,7 +119,8 @@ pub struct RecallInput {
     /// - 1.0 = pure embedding similarity (same as similarity strategy)
     /// - 0.0 = pure structural similarity (only relationship patterns)
     /// - 0.5 = balanced blend (default)
-    /// Clamped to [0.0, 1.0]. Default: 0.5.
+    ///
+    /// Clamped to \[0.0, 1.0\]. Default: 0.5.
     pub analogical_alpha: Option<f32>,
 }
 

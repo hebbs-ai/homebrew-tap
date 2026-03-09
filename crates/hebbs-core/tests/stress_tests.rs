@@ -590,7 +590,7 @@ fn concurrent_remember_and_recall_doesnt_panic() {
         handles.push(std::thread::spawn(move || {
             for _ in 0..50 {
                 let _ = eng.recall(RecallInput::new(
-                    &format!("thread {} memory", t),
+                    format!("thread {} memory", t),
                     RecallStrategy::Similarity,
                 ));
             }

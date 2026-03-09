@@ -117,10 +117,10 @@ fn storage_prefix_iterator_isolation() {
     }
 
     let a_results = scoped_a
-        .prefix_iterator(ColumnFamilyName::Default, &[b'p'])
+        .prefix_iterator(ColumnFamilyName::Default, b"p")
         .unwrap();
     let b_results = scoped_b
-        .prefix_iterator(ColumnFamilyName::Default, &[b'p'])
+        .prefix_iterator(ColumnFamilyName::Default, b"p")
         .unwrap();
 
     assert_eq!(a_results.len(), 5);

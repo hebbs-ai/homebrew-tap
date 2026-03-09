@@ -404,6 +404,7 @@ fn bench_composite_scoring(c: &mut Criterion) {
             kind: hebbs_core::memory::MemoryKind::Episode,
             device_id: None,
             logical_clock: 0,
+            associative_embedding: None,
         })
         .collect();
 
