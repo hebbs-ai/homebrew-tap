@@ -71,7 +71,23 @@ from hebbs import HebbsClient
 client = HebbsClient("localhost:6380")
 ```
 
+### Connect from TypeScript
+
+```bash
+npm install @hebbs/sdk
+```
+
+```typescript
+import { HebbsClient } from '@hebbs/sdk';
+
+const client = new HebbsClient('localhost:6380', { apiKey: process.env.HEBBS_API_KEY });
+await client.connect();
+```
+
 ### Remember
+
+<details>
+<summary>Python</summary>
 
 ```python
 await client.remember(
@@ -82,7 +98,26 @@ await client.remember(
 )
 ```
 
+</details>
+
+<details>
+<summary>TypeScript</summary>
+
+```typescript
+await client.remember({
+    content: 'Prospect mentioned competitor contract expires March 15',
+    importance: 0.95,
+    entityId: 'acme',
+    context: { stage: 'discovery', signal: 'urgency' },
+});
+```
+
+</details>
+
 ### Recall
+
+<details>
+<summary>Python</summary>
 
 ```python
 # What happened with this prospect? (Temporal)
@@ -98,7 +133,31 @@ causes = await client.recall(cue="deal lost after pricing", strategy="causal")
 patterns = await client.recall(cue="healthcare compliance objection", strategy="analogical")
 ```
 
+</details>
+
+<details>
+<summary>TypeScript</summary>
+
+```typescript
+// What happened with this prospect? (Temporal)
+const history = await client.recall({ cue: 'acme engagement', strategies: ['temporal'], entityId: 'acme' });
+
+// How should I handle this objection? (Similarity)
+const responses = await client.recall({ cue: 'we built this in-house', strategies: ['similarity'] });
+
+// Why did the last similar deal fall through? (Causal)
+const causes = await client.recall({ cue: 'deal lost after pricing', strategies: ['causal'] });
+
+// I've never sold to healthcare -- what's transferable? (Analogical)
+const patterns = await client.recall({ cue: 'healthcare compliance objection', strategies: ['analogical'] });
+```
+
+</details>
+
 ### Subscribe (Real-time)
+
+<details>
+<summary>Python</summary>
 
 ```python
 sub = await client.subscribe(entity_id="acme", confidence_threshold=0.8)
@@ -107,14 +166,44 @@ async for push in sub:
     inject_into_agent_context(push.memory)
 ```
 
+</details>
+
+<details>
+<summary>TypeScript</summary>
+
+```typescript
+const sub = await client.subscribe({ entityId: 'acme', confidenceThreshold: 0.8 });
+await sub.feed('They just mentioned compliance concerns again');
+for await (const push of sub) {
+    injectIntoAgentContext(push.memory);
+}
+```
+
+</details>
+
 ### Reflect
+
+<details>
+<summary>Python</summary>
 
 ```python
 result = await client.reflect()
 insights = await client.insights(entity_id="acme", max_results=10)
 ```
 
-### Reference Demo
+</details>
+
+<details>
+<summary>TypeScript</summary>
+
+```typescript
+const result = await client.reflect();
+const insights = await client.insights({ entityId: 'acme', maxResults: 10 });
+```
+
+</details>
+
+### Reference Demos
 
 The [hebbs-python](https://github.com/hebbs-ai/hebbs-python) repo includes a full AI Sales Intelligence Agent demo with 7 scripted scenarios, 5 LLM providers, and Rich terminal panels showing every HEBBS operation in real time.
 
@@ -122,6 +211,14 @@ The [hebbs-python](https://github.com/hebbs-ai/hebbs-python) repo includes a ful
 pip install hebbs[demo]
 hebbs-demo interactive --config gemini-vertex --verbosity verbose
 hebbs-demo scenarios --all
+```
+
+The [hebbs-typescript](https://github.com/hebbs-ai/hebbs-typescript) repo includes an equivalent TypeScript demo with 3 scripted scenarios and an interactive mode.
+
+```bash
+cd hebbs-typescript/demo && npm install
+npx tsx src/index.ts interactive --mock-llm
+npx tsx src/index.ts scenarios --all --mock-llm
 ```
 
 ---
@@ -184,6 +281,9 @@ Every recall result is ranked by a composite score that blends four signals:
 
 Pass `scoring_weights` to shift the blend for any recall or prime call:
 
+<details>
+<summary>Python</summary>
+
 ```python
 # Pure semantic match -- ignore time, importance, and reinforcement
 results = await client.recall(
@@ -198,23 +298,32 @@ results = await client.recall(
     strategies=["similarity"],
     scoring_weights=ScoringWeights(w_relevance=0.2, w_recency=0.8, w_importance=0.0, w_reinforcement=0.0),
 )
-
-# Surface high-stakes items -- critical information first
-results = await client.recall(
-    cue="deal risks",
-    strategies=["similarity"],
-    scoring_weights=ScoringWeights(w_relevance=0.3, w_recency=0.0, w_importance=0.7, w_reinforcement=0.0),
-)
-
-# Frequently accessed patterns -- what keeps coming up
-results = await client.recall(
-    cue="common objections",
-    strategies=["similarity"],
-    scoring_weights=ScoringWeights(w_relevance=0.3, w_recency=0.0, w_importance=0.0, w_reinforcement=0.7),
-)
 ```
 
-Omit `scoring_weights` for the default composite blend. Works across Python, CLI (`--weights 1:0:0:0`), and REST API.
+</details>
+
+<details>
+<summary>TypeScript</summary>
+
+```typescript
+// Pure semantic match -- ignore time, importance, and reinforcement
+const results = await client.recall({
+    cue: 'competitor pricing objection',
+    strategies: ['similarity'],
+    scoringWeights: { wRelevance: 1.0, wRecency: 0.0, wImportance: 0.0, wReinforcement: 0.0 },
+});
+
+// "What just happened?" -- bias toward recent memories
+const recent = await client.recall({
+    cue: 'latest updates',
+    strategies: ['similarity'],
+    scoringWeights: { wRelevance: 0.2, wRecency: 0.8, wImportance: 0.0, wReinforcement: 0.0 },
+});
+```
+
+</details>
+
+Omit `scoring_weights` for the default composite blend. Works across Python, TypeScript, CLI (`--weights 1:0:0:0`), and REST API.
 
 Full documentation: [docs.hebbs.ai/concepts/recall-strategies](https://docs.hebbs.ai/concepts/recall-strategies/)
 
@@ -321,7 +430,7 @@ Same API, different configuration. A Jetson Orin, MacBook, or Intel laptop runs 
 | Language | Package | Status |
 |---|---|---|
 | Python | `pip install hebbs` | Stable (gRPC + embedded via PyO3) |
-| TypeScript | `npm install @hebbs/client` | Planned |
+| TypeScript | `npm install @hebbs/sdk` | Stable (gRPC, Node.js 18+) |
 | Rust | `hebbs` crate (direct) | Stable |
 | Go | `go get hebbs.ai/client` | Planned |
 
