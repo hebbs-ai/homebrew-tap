@@ -180,6 +180,9 @@ export function protoToMemory(m: any): Memory {
       MEMORY_KIND_FROM_PROTO[m.kind ?? MEMORY_KIND_UNSPECIFIED] ??
       MemoryKind.UNSPECIFIED,
     embedding: m.embedding ? Array.from(m.embedding) : [],
+    sourceMemoryIds: (m.sourceMemoryIds ?? m.source_memory_ids ?? []).map(
+      (b: any) => Buffer.from(b),
+    ),
   };
 }
 

@@ -78,6 +78,7 @@ message Memory {
   MemoryKind kind = 12;
   optional string device_id = 13;
   uint64 logical_clock = 14;
+  repeated bytes source_memory_ids = 15;
 }
 
 message Edge {

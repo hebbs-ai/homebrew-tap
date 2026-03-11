@@ -73,6 +73,35 @@ export class Subscription implements AsyncIterable<SubscribePush> {
     }
   }
 
+  /**
+   * Collect pushes for up to `timeoutMs` milliseconds.
+   *
+   * Returns as soon as the stream ends, the timeout expires, or
+   * `maxPushes` have been collected (whichever comes first).
+   */
+  async listen(timeoutMs: number = 5000, maxPushes?: number): Promise<SubscribePush[]> {
+    const pushes: SubscribePush[] = [];
+    const deadline = Date.now() + timeoutMs;
+    const iter = this.stream;
+
+    while (maxPushes === undefined || pushes.length < maxPushes) {
+      const remaining = deadline - Date.now();
+      if (remaining <= 0) break;
+
+      const result = await Promise.race([
+        iter.next(),
+        new Promise<{ done: true; value: undefined }>((resolve) =>
+          setTimeout(() => resolve({ done: true, value: undefined }), remaining),
+        ),
+      ]);
+
+      if (result.done) break;
+      pushes.push(result.value);
+    }
+
+    return pushes;
+  }
+
   [Symbol.asyncIterator](): AsyncIterator<SubscribePush> {
     return this.stream;
   }

@@ -50,6 +50,7 @@ export interface Memory {
   readonly decayScore: number;
   readonly kind: MemoryKind;
   readonly embedding: number[];
+  readonly sourceMemoryIds: Buffer[];
 }
 
 // ── Recall Types ───────────────────────────────────────────────────────

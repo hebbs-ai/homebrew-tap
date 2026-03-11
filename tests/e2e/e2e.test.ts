@@ -412,20 +412,9 @@ async function testSubscribeFeedClose(): Promise<string> {
     log.response('feed', 'accepted');
 
     log.info('listening for pushes (3s timeout)...');
-    const pushes: unknown[] = [];
-    const timeout = setTimeout(() => {}, 3000);
-    try {
-      const iter = sub[Symbol.asyncIterator]();
-      const raceResult = await Promise.race([
-        iter.next(),
-        new Promise<{ done: true; value: undefined }>((resolve) => setTimeout(() => resolve({ done: true, value: undefined }), 3000)),
-      ]);
-      if (!raceResult.done && raceResult.value) {
-        pushes.push(raceResult.value);
-        log.detail(`push[0]: confidence=${(raceResult.value as any).confidence?.toFixed(4)}`);
-      }
-    } finally {
-      clearTimeout(timeout);
+    const pushes = await sub.listen(3000);
+    for (let i = 0; i < pushes.length; i++) {
+      log.detail(`push[${i}]: confidence=${pushes[i].confidence?.toFixed(4)}`);
     }
     log.response('listen', `${pushes.length} pushes received`);
 
