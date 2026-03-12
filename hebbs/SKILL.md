@@ -57,19 +57,28 @@ When storing new information:
 
 ## Before every command
 
-Check the server is reachable before running any `hebbs-cli` command:
+Check the server is healthy before running any `hebbs-cli` command:
 
 ```
-hebbs-cli recall "test" --format json 2>&1
+hebbs-cli status --format json 2>&1
 ```
 
-If you see a connection error, start the server in the background:
+This checks:
+- Server is reachable
+- Data directory exists on disk
+- Storage engine can read/write
+
+If `status` shows `NOT_SERVING` or a connection error, start the server in the background:
 
 ```
 HEBBS_AUTH_ENABLED=false nohup hebbs-server --data-dir ~/.hebbs/data > /tmp/hebbs-server.log 2>&1 &
 ```
 
-Wait 15 seconds for the ONNX embedder to initialize, then retry. Do not proceed until the server responds.
+Wait 15 seconds for the ONNX embedder to initialize, then retry.
+
+If `status` returns `NOT_SERVING` after the server is running, the data directory (`~/.hebbs/data`) may be missing or unwritable. Check it exists and restart the server.
+
+Do not proceed with other HEBBS commands until `status` shows `SERVING`.
 
 ## Prerequisites
 
@@ -118,8 +127,12 @@ Before running commands, verify the server is reachable: `hebbs-cli recall "test
 ### Remember — store a memory
 
 ```
-hebbs-cli remember "The user prefers dark mode in all applications" --importance 0.8 --entity-id user_prefs
+hebbs-cli remember "The user prefers dark mode in all applications" --importance 0.8 --entity-id user_prefs --format json
 ```
+
+> **Always use `--format json` when you need the memory ID** (e.g. for `--edge` on a subsequent `remember`). Extract the ID with: `jq -r '.memory_id'`
+>
+> **Warning:** Capture the memory ID from `--format json` output **before** referencing it in `--edge`. Do not parse IDs from human-format output.
 
 Flags:
 - `--importance <0.0-1.0>` — how important this memory is (default 0.5). Use 0.8+ for user preferences, decisions, corrections. Use 0.3 for transient observations.
