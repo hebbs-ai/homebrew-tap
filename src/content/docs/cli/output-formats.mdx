@@ -60,6 +60,35 @@ hebbs-cli recall --entity customer-42 --query "contact preferences" --format jso
 
 The `score` field is the composite score. The `relevance` field is the raw cosine similarity from the primary strategy. The `strategy_details` array contains per-strategy metadata including the raw relevance for each strategy that found the result.
 
+### remember JSON output
+
+The `remember` command returns a single JSON object (not an array) with the stored memory:
+
+```bash
+hebbs-cli remember "Customer prefers email over phone" \
+  --importance 0.8 \
+  --entity-id customer-42 \
+  --format json
+```
+
+```json
+{
+  "memory_id": "01KK3S0KXYE22EFF489YRTH559",
+  "content": "Customer prefers email over phone",
+  "importance": 0.8,
+  "kind": "episode",
+  "entity_id": "customer-42",
+  "created_at": 1705326720000000
+}
+```
+
+Extract the `memory_id` for use in subsequent `--edge` flags:
+
+```bash
+MEM_ID=$(hebbs-cli remember "fact one" --format json | jq -r '.memory_id')
+hebbs-cli remember "fact two" --edge "$MEM_ID:followed_by" --format json
+```
+
 ### Piping to jq
 
 JSON format pairs well with `jq` for extraction and transformation:
