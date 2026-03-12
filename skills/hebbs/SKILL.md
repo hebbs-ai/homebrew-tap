@@ -84,8 +84,12 @@ Before running commands, verify the server is reachable: `hebbs-cli recall "test
 ### Remember — store a memory
 
 ```
-hebbs-cli remember "The user prefers dark mode in all applications" --importance 0.8 --entity-id user_prefs
+hebbs-cli remember "The user prefers dark mode in all applications" --importance 0.8 --entity-id user_prefs --format json
 ```
+
+> **Always use `--format json` when you need the memory ID** (e.g. for `--edge` on a subsequent `remember`). Extract the ID with: `jq -r '.memory_id'`
+>
+> **Warning:** Capture the memory ID from `--format json` output **before** referencing it in `--edge`. Do not parse IDs from human-format output.
 
 Flags:
 - `--importance <0.0-1.0>` — how important this memory is (default 0.5). Use 0.8+ for user preferences, decisions, corrections. Use 0.3 for transient observations.
