@@ -273,7 +273,7 @@ hebbs-cli prime customer-42 --max-memories 20 --similarity-cue "account history"
 
 ## reflect
 
-Trigger a full server-side reflection cycle. Requires LLM configuration on the server.
+Trigger a full server-side reflection cycle: clustering → LLM proposal → validation → commit in a single command. Requires an LLM provider configured on the server (e.g. OpenAI API key). This is the simplest way to run reflection when an LLM is available.
 
 ```bash
 hebbs-cli reflect --entity-id customer-42
@@ -284,13 +284,15 @@ hebbs-cli reflect --entity-id customer-42
 | `--entity-id` | `-e` | No | — | Entity scope (omit for global) |
 | `--since-us` | — | No | — | Only process memories created after this timestamp (microseconds) |
 
-For agent-driven reflection without server-side LLM, use `reflect-prepare` + `reflect-commit` below.
+If no server-side LLM is configured, or you want the agent to control the reasoning step, use [`reflect-prepare`](#reflect-prepare) + [`reflect-commit`](#reflect-commit) instead.
 
 ---
 
 ## reflect-prepare
 
-Prepare reflection data for agent-driven two-step reflect. No LLM is called — HEBBS clusters memories and builds prompts.
+Agent-driven alternative to [`reflect`](#reflect). Use this when no server-side LLM is configured and the agent wants full control over the reasoning step — the agent acts as the LLM. If you have an LLM provider configured on the server, prefer `reflect` instead for a simpler single-command workflow.
+
+No LLM is called — HEBBS clusters memories and builds prompts for the agent to reason over.
 
 ```bash
 hebbs-cli reflect-prepare --entity-id customer-42 --format json
@@ -336,7 +338,7 @@ Use `--format json` for machine-readable output. Each cluster includes full `mem
 
 ## reflect-commit
 
-Commit agent-produced insights from a previous `reflect-prepare` session.
+Commit agent-produced insights from a previous [`reflect-prepare`](#reflect-prepare) session. Part of the agent-driven two-step reflect flow.
 
 ```bash
 hebbs-cli reflect-commit \
