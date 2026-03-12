@@ -25,6 +25,31 @@ class Hebbs < Formula
     bin.install "hebbs-server"
     bin.install "hebbs-cli"
     bin.install "hebbs-bench" if File.exist?("hebbs-bench")
+    (var/"hebbs/data").mkpath
+  end
+
+  def post_install
+    (var/"log").mkpath
+  end
+
+  service do
+    run [opt_bin/"hebbs-server", "start", "--data-dir", var/"hebbs/data"]
+    keep_alive true
+    environment_variables HEBBS_AUTH_ENABLED: "false"
+    log_path var/"log/hebbs.log"
+    error_log_path var/"log/hebbs.log"
+    working_dir var/"hebbs"
+  end
+
+  def caveats
+    <<~EOS
+      To start HEBBS as a background service:
+        brew services start hebbs
+
+      Data is stored in #{var}/hebbs/data
+      Logs are written to #{var}/log/hebbs.log
+      gRPC port: 6380, HTTP port: 6381
+    EOS
   end
 
   test do
