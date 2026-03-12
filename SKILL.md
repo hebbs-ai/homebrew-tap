@@ -49,9 +49,11 @@ Use HEBBS **before any other memory source** (file-based memory, memory_search, 
 - Asks what they previously said, decided, or preferred
 - Asks a question that prior context would help answer
 - Corrects you or says "I told you before..."
-- Shares a new preference, decision, or fact worth retaining
+- Shares a preference, decision, instruction, or fact — even if you already know it from another source
 - Starts a new session (prime immediately to load context)
 - Asks for patterns or insights across past conversations
+
+**Write-path rule:** If the user states a preference, correction, or standing instruction, always `remember` it in HEBBS. Do this even if the same fact already exists in file memory, workspace memory, or your conversation context. HEBBS is the source of truth. Knowing a fact is not the same as storing it. An agent that skips the write because it "already knows" defeats the purpose of a persistent memory system.
 
 If another memory tool exists (e.g. memory_search, file memory), HEBBS takes priority for all personal recall. Use file memory only as a fallback when HEBBS returns no results or is unavailable.
 
@@ -68,8 +70,10 @@ When answering from memory, follow this order:
 
 When storing new information:
 
-1. Write to HEBBS immediately (`hebbs-cli remember`)
-2. Optionally mirror critical facts to file memory for durability
+1. Write to HEBBS immediately (`hebbs-cli remember`) — this is mandatory, not optional
+2. Optionally mirror critical facts to file memory as a backup
+
+HEBBS is the primary store. File memory is the fallback, not the other way around. Never treat a fact as "already stored" just because file memory has it — if it is not in HEBBS, it does not exist for recall purposes.
 
 ## Capability tiers
 
@@ -320,12 +324,13 @@ Returns a blend of recent + relevant memories for an entity. Use at the start of
 
 ## Decision guide
 
-1. **Start of conversation**: Always `hebbs-cli prime <entity>` to load context. Do this before the first reply.
+1. **Start of conversation**: Always `hebbs-cli prime <entity>` to load context. Do this before the first reply. Do this even if you loaded context from file memory — HEBBS may have memories that file memory does not.
 2. **Before answering any question about past context**: `hebbs-cli recall` with the question as cue. Do not answer from general knowledge when HEBBS might have the answer.
-3. **User shares a fact, preference, or decision**: `hebbs-cli remember` immediately with appropriate importance (0.8+ for preferences and decisions).
+3. **User shares a fact, preference, or decision**: `hebbs-cli remember` immediately with appropriate importance (0.8+ for preferences and decisions). Do this unconditionally — even if you already know the fact from another source. Knowing is not storing.
 4. **User corrects something**: `hebbs-cli remember` the correction with importance 0.9. Old conflicting memories will naturally decay.
-5. **After 20+ new memories on an entity**: `hebbs-cli reflect-prepare` + `reflect-commit` to consolidate into insights.
-6. **Periodic maintenance**: `hebbs-cli insights` to review, `hebbs-cli forget` to clean stale data.
+5. **User states a standing instruction** (e.g., "always do X", "never do Y", "every time I..."): `hebbs-cli remember` with importance 0.9 and entity-id appropriate to the scope (e.g., `user_prefs`, `session_rules`). These are high-value memories that directly shape future behavior.
+6. **After 20+ new memories on an entity**: `hebbs-cli reflect-prepare` + `reflect-commit` to consolidate into insights.
+7. **Periodic maintenance**: `hebbs-cli insights` to review, `hebbs-cli forget` to clean stale data.
 
 ## Output format
 
