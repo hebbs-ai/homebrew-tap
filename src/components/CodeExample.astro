@@ -1,51 +1,215 @@
 ---
-const codeHtml = `<span class="text-cyan">from</span> <span class="text-text">hebbs</span> <span class="text-cyan">import</span> <span class="text-text">Hebbs</span>
+const tabs = [
+  {
+    id: "cli",
+    label: "CLI",
+    install: "brew install hebbs-ai/tap/hebbs",
+    installNote: "Same binary as the server - includes the CLI client.",
+    filename: "terminal",
+    lang: "bash",
+    code: `<span class="text-muted"># Store a memory</span>
+<span class="text-accent">$</span> <span class="text-text">hebbs-cli remember</span> <span class="text-green">"Customer prefers annual billing"</span> <span class="text-muted">\\</span>
+    <span class="text-cyan">--importance</span> <span class="text-accent">0.8</span> <span class="text-cyan">--entity-id</span> <span class="text-green">"acme"</span>
 
-<span class="text-muted"># Connect (or embed — no server needed)</span>
+<span class="text-muted"># Recall with different strategies</span>
+<span class="text-accent">$</span> <span class="text-text">hebbs-cli recall</span> <span class="text-green">"billing preferences"</span> <span class="text-cyan">--strategy</span> <span class="text-green">similarity</span>
+<span class="text-accent">$</span> <span class="text-text">hebbs-cli recall</span> <span class="text-green">"what happened with acme"</span> <span class="text-cyan">--strategy</span> <span class="text-green">temporal</span> <span class="text-cyan">--entity-id</span> <span class="text-green">"acme"</span>
+<span class="text-accent">$</span> <span class="text-text">hebbs-cli recall</span> <span class="text-green">"why did the deal fail"</span> <span class="text-cyan">--strategy</span> <span class="text-green">causal</span>
+
+<span class="text-muted"># Consolidate into insights</span>
+<span class="text-accent">$</span> <span class="text-text">hebbs-cli reflect-prepare</span> <span class="text-cyan">--entity-id</span> <span class="text-green">"acme"</span>
+<span class="text-accent">$</span> <span class="text-text">hebbs-cli insights</span> <span class="text-cyan">--entity-id</span> <span class="text-green">"acme"</span>`,
+  },
+  {
+    id: "python",
+    label: "Python",
+    install: "pip install hebbs",
+    installNote: null,
+    filename: "main.py",
+    lang: "python",
+    code: `<span class="text-cyan">from</span> <span class="text-text">hebbs</span> <span class="text-cyan">import</span> <span class="text-text">Hebbs</span>
+
 <span class="text-text">e</span> <span class="text-cyan">=</span> <span class="text-text">Hebbs</span>(<span class="text-green">"localhost:6380"</span>)
 
-<span class="text-muted"># Remember — with importance scoring</span>
+<span class="text-muted"># Remember - with importance scoring</span>
 <span class="text-text">e</span>.<span class="text-text">remember</span>(
-    <span class="text-text">experience</span><span class="text-cyan">=</span><span class="text-green">"Prospect mentioned competitor contract expires March 15"</span>,
-    <span class="text-text">importance</span><span class="text-cyan">=</span><span class="text-accent">0.95</span>,
-    <span class="text-text">context</span><span class="text-cyan">=</span><span class="text-muted">{</span><span class="text-green">"prospect_id"</span>: <span class="text-green">"acme"</span>, <span class="text-green">"signal"</span>: <span class="text-green">"urgency"</span><span class="text-muted">}</span>
+    <span class="text-text">experience</span><span class="text-cyan">=</span><span class="text-green">"Customer prefers annual billing"</span>,
+    <span class="text-text">importance</span><span class="text-cyan">=</span><span class="text-accent">0.8</span>,
+    <span class="text-text">context</span><span class="text-cyan">=</span><span class="text-muted">{</span><span class="text-green">"prospect_id"</span>: <span class="text-green">"acme"</span><span class="text-muted">}</span>
 )
 
-<span class="text-muted"># Recall — four strategies, one engine</span>
-<span class="text-text">history</span>  <span class="text-cyan">=</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-text">cue</span><span class="text-cyan">=</span><span class="text-muted">{</span><span class="text-green">"prospect_id"</span>: <span class="text-green">"acme"</span><span class="text-muted">}</span>, <span class="text-text">strategy</span><span class="text-cyan">=</span><span class="text-green">"temporal"</span>)
-<span class="text-text">similar</span>  <span class="text-cyan">=</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-text">cue</span><span class="text-cyan">=</span><span class="text-green">"we built this in-house"</span>, <span class="text-text">strategy</span><span class="text-cyan">=</span><span class="text-green">"similarity"</span>)
+<span class="text-muted"># Recall - four strategies, one engine</span>
+<span class="text-text">history</span>  <span class="text-cyan">=</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-text">cue</span><span class="text-cyan">=</span><span class="text-green">"acme"</span>, <span class="text-text">strategy</span><span class="text-cyan">=</span><span class="text-green">"temporal"</span>)
+<span class="text-text">similar</span>  <span class="text-cyan">=</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-text">cue</span><span class="text-cyan">=</span><span class="text-green">"billing preferences"</span>, <span class="text-text">strategy</span><span class="text-cyan">=</span><span class="text-green">"similarity"</span>)
 <span class="text-text">causes</span>   <span class="text-cyan">=</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-text">cue</span><span class="text-cyan">=</span><span class="text-green">"deal lost after pricing"</span>, <span class="text-text">strategy</span><span class="text-cyan">=</span><span class="text-green">"causal"</span>)
-<span class="text-text">patterns</span> <span class="text-cyan">=</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-text">cue</span><span class="text-cyan">=</span><span class="text-green">"healthcare compliance"</span>, <span class="text-text">strategy</span><span class="text-cyan">=</span><span class="text-green">"analogical"</span>)
+<span class="text-text">patterns</span> <span class="text-cyan">=</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-text">cue</span><span class="text-cyan">=</span><span class="text-green">"compliance"</span>, <span class="text-text">strategy</span><span class="text-cyan">=</span><span class="text-green">"analogical"</span>)
 
-<span class="text-muted"># Subscribe — memory surfaces automatically</span>
-<span class="text-cyan">for</span> <span class="text-text">memory</span> <span class="text-cyan">in</span> <span class="text-text">e</span>.<span class="text-text">subscribe</span>(<span class="text-text">input_stream</span><span class="text-cyan">=</span><span class="text-text">transcript</span>, <span class="text-text">threshold</span><span class="text-cyan">=</span><span class="text-accent">0.8</span>):
-    <span class="text-text">inject_into_context</span>(<span class="text-text">memory</span>)
+<span class="text-muted"># Reflect - consolidate episodes into insights</span>
+<span class="text-text">insights</span> <span class="text-cyan">=</span> <span class="text-text">e</span>.<span class="text-text">insights</span>(<span class="text-text">filter</span><span class="text-cyan">=</span><span class="text-muted">{</span><span class="text-green">"topic"</span>: <span class="text-green">"objection handling"</span><span class="text-muted">}</span>)`,
+  },
+  {
+    id: "typescript",
+    label: "TypeScript",
+    install: "npm install @hebbs-ai/hebbs",
+    installNote: null,
+    filename: "index.ts",
+    lang: "typescript",
+    code: `<span class="text-cyan">import</span> <span class="text-muted">{</span> <span class="text-text">Hebbs</span> <span class="text-muted">}</span> <span class="text-cyan">from</span> <span class="text-green">"@hebbs-ai/hebbs"</span>;
 
-<span class="text-muted"># Reflect — consolidate episodes into insights</span>
-<span class="text-text">e</span>.<span class="text-text">reflect_policy</span>(<span class="text-muted">{</span><span class="text-green">"triggers"</span>: [<span class="text-muted">{</span><span class="text-green">"type"</span>: <span class="text-green">"threshold"</span>, <span class="text-green">"new_memories"</span>: <span class="text-accent">50</span><span class="text-muted">}</span>]<span class="text-muted">}</span>)
-<span class="text-text">insights</span> <span class="text-cyan">=</span> <span class="text-text">e</span>.<span class="text-text">insights</span>(<span class="text-text">filter</span><span class="text-cyan">=</span><span class="text-muted">{</span><span class="text-green">"topic"</span>: <span class="text-green">"objection handling"</span><span class="text-muted">}</span>)`;
+<span class="text-cyan">const</span> <span class="text-text">e</span> <span class="text-cyan">=</span> <span class="text-cyan">new</span> <span class="text-text">Hebbs</span>(<span class="text-green">"localhost:6380"</span>);
+
+<span class="text-muted">// Remember - with importance scoring</span>
+<span class="text-cyan">await</span> <span class="text-text">e</span>.<span class="text-text">remember</span>(<span class="text-muted">{</span>
+  <span class="text-text">experience</span>: <span class="text-green">"Customer prefers annual billing"</span>,
+  <span class="text-text">importance</span>: <span class="text-accent">0.8</span>,
+  <span class="text-text">context</span>: <span class="text-muted">{</span> <span class="text-text">prospect_id</span>: <span class="text-green">"acme"</span> <span class="text-muted">}</span>,
+<span class="text-muted">}</span>);
+
+<span class="text-muted">// Recall - four strategies, one engine</span>
+<span class="text-cyan">const</span> <span class="text-text">history</span>  <span class="text-cyan">=</span> <span class="text-cyan">await</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-green">"acme"</span>, <span class="text-muted">{</span> <span class="text-text">strategy</span>: <span class="text-green">"temporal"</span> <span class="text-muted">}</span>);
+<span class="text-cyan">const</span> <span class="text-text">similar</span>  <span class="text-cyan">=</span> <span class="text-cyan">await</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-green">"billing preferences"</span>, <span class="text-muted">{</span> <span class="text-text">strategy</span>: <span class="text-green">"similarity"</span> <span class="text-muted">}</span>);
+<span class="text-cyan">const</span> <span class="text-text">causes</span>   <span class="text-cyan">=</span> <span class="text-cyan">await</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-green">"deal lost after pricing"</span>, <span class="text-muted">{</span> <span class="text-text">strategy</span>: <span class="text-green">"causal"</span> <span class="text-muted">}</span>);
+<span class="text-cyan">const</span> <span class="text-text">patterns</span> <span class="text-cyan">=</span> <span class="text-cyan">await</span> <span class="text-text">e</span>.<span class="text-text">recall</span>(<span class="text-green">"compliance"</span>, <span class="text-muted">{</span> <span class="text-text">strategy</span>: <span class="text-green">"analogical"</span> <span class="text-muted">}</span>);
+
+<span class="text-muted">// Reflect - consolidate episodes into insights</span>
+<span class="text-cyan">const</span> <span class="text-text">insights</span> <span class="text-cyan">=</span> <span class="text-cyan">await</span> <span class="text-text">e</span>.<span class="text-text">insights</span>(<span class="text-muted">{</span> <span class="text-text">topic</span>: <span class="text-green">"objection handling"</span> <span class="text-muted">}</span>);`,
+  },
+  {
+    id: "grpc",
+    label: "gRPC",
+    install: null,
+    installNote: "Connect to localhost:6380 with any gRPC client.",
+    filename: "hebbs.proto",
+    lang: "protobuf",
+    code: `<span class="text-cyan">service</span> <span class="text-text">HebbsService</span> <span class="text-muted">{</span>
+  <span class="text-cyan">rpc</span> <span class="text-text">Remember</span>  (<span class="text-text">RememberRequest</span>)  <span class="text-cyan">returns</span> (<span class="text-text">RememberResponse</span>);
+  <span class="text-cyan">rpc</span> <span class="text-text">Recall</span>    (<span class="text-text">RecallRequest</span>)    <span class="text-cyan">returns</span> (<span class="text-text">RecallResponse</span>);
+  <span class="text-cyan">rpc</span> <span class="text-text">Revise</span>    (<span class="text-text">ReviseRequest</span>)    <span class="text-cyan">returns</span> (<span class="text-text">ReviseResponse</span>);
+  <span class="text-cyan">rpc</span> <span class="text-text">Forget</span>    (<span class="text-text">ForgetRequest</span>)    <span class="text-cyan">returns</span> (<span class="text-text">ForgetResponse</span>);
+  <span class="text-cyan">rpc</span> <span class="text-text">Prime</span>     (<span class="text-text">PrimeRequest</span>)     <span class="text-cyan">returns</span> (<span class="text-text">PrimeResponse</span>);
+  <span class="text-cyan">rpc</span> <span class="text-text">Subscribe</span> (<span class="text-text">SubscribeRequest</span>) <span class="text-cyan">returns</span> (<span class="text-cyan">stream</span> <span class="text-text">MemoryEvent</span>);
+  <span class="text-cyan">rpc</span> <span class="text-text">Reflect</span>   (<span class="text-text">ReflectRequest</span>)   <span class="text-cyan">returns</span> (<span class="text-text">ReflectResponse</span>);
+  <span class="text-cyan">rpc</span> <span class="text-text">Insights</span>  (<span class="text-text">InsightsRequest</span>)  <span class="text-cyan">returns</span> (<span class="text-text">InsightsResponse</span>);
+<span class="text-muted">}</span>
+
+<span class="text-muted">// Example: grpcurl</span>
+<span class="text-muted">// grpcurl -plaintext -d '{"content":"Customer prefers annual billing","importance":0.8}'</span>
+<span class="text-muted">//   localhost:6380 hebbs.HebbsService/Remember</span>`,
+  },
+  {
+    id: "rest",
+    label: "REST",
+    install: null,
+    installNote: "HTTP API available on port 6381.",
+    filename: "terminal",
+    lang: "bash",
+    code: `<span class="text-muted"># Remember</span>
+<span class="text-accent">$</span> <span class="text-text">curl</span> <span class="text-cyan">-X POST</span> <span class="text-green">http://localhost:6381/v1/remember</span> <span class="text-muted">\\</span>
+    <span class="text-cyan">-H</span> <span class="text-green">"Content-Type: application/json"</span> <span class="text-muted">\\</span>
+    <span class="text-cyan">-d</span> <span class="text-green">'{"content": "Customer prefers annual billing", "importance": 0.8}'</span>
+
+<span class="text-muted"># Recall (similarity)</span>
+<span class="text-accent">$</span> <span class="text-text">curl</span> <span class="text-cyan">-X POST</span> <span class="text-green">http://localhost:6381/v1/recall</span> <span class="text-muted">\\</span>
+    <span class="text-cyan">-H</span> <span class="text-green">"Content-Type: application/json"</span> <span class="text-muted">\\</span>
+    <span class="text-cyan">-d</span> <span class="text-green">'{"cue": "billing preferences", "strategy": "similarity"}'</span>
+
+<span class="text-muted"># Recall (causal)</span>
+<span class="text-accent">$</span> <span class="text-text">curl</span> <span class="text-cyan">-X POST</span> <span class="text-green">http://localhost:6381/v1/recall</span> <span class="text-muted">\\</span>
+    <span class="text-cyan">-H</span> <span class="text-green">"Content-Type: application/json"</span> <span class="text-muted">\\</span>
+    <span class="text-cyan">-d</span> <span class="text-green">'{"cue": "why did the deal fail", "strategy": "causal"}'</span>
+
+<span class="text-muted"># Insights</span>
+<span class="text-accent">$</span> <span class="text-text">curl</span> <span class="text-green">http://localhost:6381/v1/insights?entity_id=acme</span>`,
+  },
+];
 ---
 
-<section class="py-20 md:py-32 border-t border-border/50">
+<section id="integrate" class="py-20 md:py-32 border-t border-border/50">
   <div class="mx-auto max-w-4xl px-6">
     <div class="text-center mb-12">
       <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-        50 lines. Not 2,000.
+        Every way in.
       </h2>
       <p class="text-muted text-lg">
-        The full agent memory lifecycle in Python.
+        CLI, Python, TypeScript, gRPC, or REST. Same engine. Same API. Pick your path.
       </p>
     </div>
 
-    <div class="rounded-xl border border-border bg-surface/40 overflow-hidden">
-      <div class="flex items-center gap-2 px-4 py-3 border-b border-border">
-        <div class="w-3 h-3 rounded-full bg-red/40"></div>
-        <div class="w-3 h-3 rounded-full bg-accent/40"></div>
-        <div class="w-3 h-3 rounded-full bg-green/40"></div>
-        <span class="ml-2 text-xs text-muted font-mono">main.py</span>
+    <!-- Tabs -->
+    <div class="rounded-xl border border-border bg-surface/40 overflow-hidden" id="code-tabs">
+      <!-- Tab bar -->
+      <div class="flex border-b border-border overflow-x-auto">
+        {tabs.map((tab, i) => (
+          <button
+            class={`px-5 py-3 text-sm font-mono transition-colors whitespace-nowrap code-tab-btn ${i === 0 ? 'text-accent border-b-2 border-accent bg-accent/[0.04]' : 'text-muted hover:text-text'}`}
+            data-tab={tab.id}
+          >
+            {tab.label}
+          </button>
+        ))}
       </div>
 
-      <pre class="p-6 overflow-x-auto text-sm leading-relaxed font-mono"><code set:html={codeHtml} /></pre>
+      <!-- Tab panels -->
+      {tabs.map((tab, i) => (
+        <div class={`code-tab-panel ${i === 0 ? '' : 'hidden'}`} data-panel={tab.id}>
+          {/* Install line */}
+          {tab.install && (
+            <div class="flex items-center gap-3 px-6 py-3 border-b border-border/50 bg-bg/50">
+              <span class="text-xs text-muted shrink-0">Install:</span>
+              <code class="font-mono text-xs text-accent">{tab.install}</code>
+              {tab.installNote && (
+                <span class="text-[11px] text-muted/60 ml-auto hidden sm:inline">{tab.installNote}</span>
+              )}
+            </div>
+          )}
+          {!tab.install && tab.installNote && (
+            <div class="flex items-center gap-3 px-6 py-3 border-b border-border/50 bg-bg/50">
+              <span class="text-xs text-muted">{tab.installNote}</span>
+            </div>
+          )}
+
+          {/* File header */}
+          <div class="flex items-center gap-2 px-4 py-2.5 border-b border-border/50">
+            <div class="w-2.5 h-2.5 rounded-full bg-red/40"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-accent/40"></div>
+            <div class="w-2.5 h-2.5 rounded-full bg-green/40"></div>
+            <span class="ml-2 text-xs text-muted font-mono">{tab.filename}</span>
+          </div>
+
+          {/* Code */}
+          <pre class="p-6 overflow-x-auto text-sm leading-relaxed font-mono"><code set:html={tab.code} /></pre>
+        </div>
+      ))}
     </div>
   </div>
 </section>
+
+<script is:inline>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('code-tabs');
+    if (!container) return;
+    const buttons = container.querySelectorAll('.code-tab-btn');
+    const panels = container.querySelectorAll('.code-tab-panel');
+
+    buttons.forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tabId = btn.getAttribute('data-tab');
+
+        buttons.forEach(b => {
+          b.classList.remove('text-accent', 'border-b-2', 'border-accent', 'bg-accent/[0.04]');
+          b.classList.add('text-muted');
+        });
+        btn.classList.remove('text-muted');
+        btn.classList.add('text-accent', 'border-b-2', 'border-accent', 'bg-accent/[0.04]');
+
+        panels.forEach(p => {
+          if (p.getAttribute('data-panel') === tabId) {
+            p.classList.remove('hidden');
+          } else {
+            p.classList.add('hidden');
+          }
+        });
+      });
+    });
+  });
+</script>

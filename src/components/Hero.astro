@@ -17,12 +17,12 @@
     </p>
 
     <p class="text-base md:text-lg text-muted max-w-2xl mx-auto mb-10">
-      One binary. Zero network hops. Sub-10ms recall at 10M memories.
+      Four recall strategies. Native consolidation. Automatic decay. Drop-in agent skill.
     </p>
 
-    <div class="inline-flex items-center rounded-xl border border-border bg-surface/60 pl-6 pr-2 py-3 mb-10 gap-3 group cursor-pointer" onclick="navigator.clipboard.writeText('curl -sSf https://hebbs.ai/install | sh')">
+    <div class="inline-flex items-center rounded-xl border border-border bg-surface/60 pl-6 pr-2 py-3 mb-10 gap-3 group cursor-pointer" onclick="navigator.clipboard.writeText('brew install hebbs-ai/tap/hebbs')">
       <code class="font-mono text-sm md:text-base text-muted">
-        <span class="text-accent">$</span> curl -sSf https://hebbs.ai/install | sh
+        <span class="text-accent">$</span> brew install hebbs-ai/tap/hebbs
       </code>
       <span class="rounded-lg border border-border bg-bg px-3 py-1.5 text-xs text-muted group-hover:text-text group-hover:border-muted transition-colors">
         Copy
@@ -47,15 +47,17 @@
     </div>
 
     <div class="font-mono text-sm text-muted">
-      <span class="text-accent font-medium">384ns</span>
-      <span class="text-muted"> writes</span>
+      <span class="text-accent font-medium">4</span>
+      <span class="text-muted"> recall strategies</span>
       <span class="text-muted mx-1.5">&middot;</span>
-      <span class="text-accent font-medium">114ns</span>
-      <span class="text-muted"> reads</span>
+      <span class="text-accent font-medium">Native</span>
+      <span class="text-muted"> consolidation</span>
       <span class="text-muted mx-1.5">&middot;</span>
-      <span class="text-accent font-medium">8ms</span>
-      <span class="text-muted"> recall at </span>
-      <span class="text-accent font-medium">10M</span>
+      <span class="text-accent font-medium">Auto</span>
+      <span class="text-muted"> decay</span>
+      <span class="text-muted mx-1.5">&middot;</span>
+      <span class="text-accent font-medium">0</span>
+      <span class="text-muted"> config</span>
     </div>
   </div>
 </section>

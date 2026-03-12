@@ -1,19 +1,4 @@
 ---
-const storagePrimitive = [
-  { op: "remember (storage path)", latency: "384 ns" },
-  { op: "get (point lookup)", latency: "114 ns" },
-  { op: "serialize (bitcode)", latency: "43 ns" },
-  { op: "delete", latency: "84 ns" },
-  { op: "batch write (10K)", latency: "3.04 ms" },
-];
-
-const scalability = [
-  { memories: "100K", similarity: "3ms", temporal: "0.6ms" },
-  { memories: "1M", similarity: "5ms", temporal: "0.8ms" },
-  { memories: "10M", similarity: "8ms", temporal: "1.2ms" },
-  { memories: "100M", similarity: "12ms", temporal: "2.0ms" },
-];
-
 const systemBench = [
   { op: "remember", p50: "0.8ms", p99: "4ms" },
   { op: "recall (similarity)", p50: "2ms", p99: "8ms" },
@@ -22,53 +7,31 @@ const systemBench = [
   { op: "recall (multi-strategy)", p50: "6ms", p99: "18ms" },
   { op: "subscribe (push)", p50: "1ms", p99: "5ms" },
 ];
+
+const scalability = [
+  { memories: "100K", similarity: "3ms", temporal: "0.6ms" },
+  { memories: "1M", similarity: "5ms", temporal: "0.8ms" },
+  { memories: "10M", similarity: "8ms", temporal: "1.2ms" },
+  { memories: "100M", similarity: "12ms", temporal: "2.0ms" },
+];
 ---
 
 <section id="benchmarks" class="py-20 md:py-32 border-t border-border/50">
   <div class="mx-auto max-w-6xl px-6">
     <div class="text-center mb-16">
       <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-        Nanosecond storage. Millisecond cognition.
+        And it does all of this in under 10ms.
       </h2>
       <p class="text-muted text-lg">
-        Raw storage measured at the engine core. Full cognitive recall measured at the API boundary.
+        One binary. Zero network hops. Local ONNX embeddings. RocksDB storage. Rust from byte zero.
       </p>
     </div>
 
     <div class="grid lg:grid-cols-2 gap-8 mb-16">
-      <!-- Storage primitive -->
-      <div class="rounded-xl border border-border bg-surface/40 p-6 md:p-8">
-        <h3 class="font-mono text-xs uppercase tracking-wider text-accent mb-6">
-          Storage primitive — engine core
-        </h3>
-        <div class="overflow-x-auto">
-          <table class="w-full text-sm">
-            <thead>
-              <tr class="border-b border-border">
-                <th class="text-left text-muted font-normal pb-3">Operation</th>
-                <th class="text-right text-muted font-normal pb-3">Latency</th>
-              </tr>
-            </thead>
-            <tbody>
-              {storagePrimitive.map((row) => (
-                <tr class="border-b border-border/50">
-                  <td class="py-3 font-mono text-cyan text-xs">{row.op}</td>
-                  <td class="py-3 text-right font-mono text-accent">{row.latency}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-        <p class="text-xs text-muted mt-4 pt-4 border-t border-border">
-          Embedded engine, release build, 200B structured memories.
-          Includes ULID generation, validation, and bitcode serialization. No embedding, no indexing.
-        </p>
-      </div>
-
       <!-- System benchmarks -->
       <div class="rounded-xl border border-border bg-surface/40 p-6 md:p-8">
         <h3 class="font-mono text-xs uppercase tracking-wider text-accent mb-6">
-          Full system — 10M memories, 2 vCPU
+          Full system - 10M memories, 2 vCPU
         </h3>
         <div class="overflow-x-auto">
           <table class="w-full text-sm">
@@ -94,32 +57,35 @@ const systemBench = [
           Single c6g.large instance (2 vCPU, 4GB RAM). Includes local ONNX embedding, index lookup, deserialization.
         </p>
       </div>
-    </div>
 
-    <!-- Scalability -->
-    <div class="rounded-xl border border-border bg-surface/40 p-6 md:p-8">
-      <h3 class="font-mono text-xs uppercase tracking-wider text-accent mb-6">
-        Recall latency at scale (p99)
-      </h3>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead>
-            <tr class="border-b border-border">
-              <th class="text-left text-muted font-normal pb-3">Memories stored</th>
-              <th class="text-right text-muted font-normal pb-3">Similarity recall</th>
-              <th class="text-right text-muted font-normal pb-3">Temporal recall</th>
-            </tr>
-          </thead>
-          <tbody>
-            {scalability.map((row) => (
-              <tr class="border-b border-border/50">
-                <td class="py-3 font-mono font-medium text-text">{row.memories}</td>
-                <td class="py-3 text-right font-mono text-accent">{row.similarity}</td>
-                <td class="py-3 text-right font-mono text-accent">{row.temporal}</td>
+      <!-- Scalability -->
+      <div class="rounded-xl border border-border bg-surface/40 p-6 md:p-8">
+        <h3 class="font-mono text-xs uppercase tracking-wider text-accent mb-6">
+          Recall latency at scale (p99)
+        </h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-border">
+                <th class="text-left text-muted font-normal pb-3">Memories stored</th>
+                <th class="text-right text-muted font-normal pb-3">Similarity recall</th>
+                <th class="text-right text-muted font-normal pb-3">Temporal recall</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody>
+              {scalability.map((row) => (
+                <tr class="border-b border-border/50">
+                  <td class="py-3 font-mono font-medium text-text">{row.memories}</td>
+                  <td class="py-3 text-right font-mono text-accent">{row.similarity}</td>
+                  <td class="py-3 text-right font-mono text-accent">{row.temporal}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p class="text-xs text-muted mt-4 pt-4 border-t border-border">
+          Storage primitive operates at 384ns. Full system latency dominated by local ONNX embedding (~3ms per call).
+        </p>
       </div>
     </div>
   </div>

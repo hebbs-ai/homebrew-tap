@@ -1,13 +1,16 @@
 ---
 const capabilities = [
-  { name: "No LLM on hot path", hebbs: true, pgvector: true, qdrant: true, neo4j: true, kv: true, wrappers: false },
-  { name: "Multi-strategy recall (4 modes)", hebbs: true, pgvector: false, qdrant: false, neo4j: false, kv: false, wrappers: false },
-  { name: "Native decay & reinforcement", hebbs: true, pgvector: false, qdrant: false, neo4j: false, kv: false, wrappers: false },
-  { name: "Background consolidation", hebbs: true, pgvector: false, qdrant: false, neo4j: false, kv: false, wrappers: false },
-  { name: "Causal reasoning", hebbs: true, pgvector: false, qdrant: false, neo4j: false, kv: false, wrappers: false },
-  { name: "Atomic multi-index operations", hebbs: true, pgvector: false, qdrant: false, neo4j: false, kv: false, wrappers: false },
-  { name: "Single binary, zero deps", hebbs: true, pgvector: false, qdrant: true, neo4j: false, kv: true, wrappers: false },
-  { name: "Embedded mode (no server)", hebbs: true, pgvector: false, qdrant: true, neo4j: false, kv: false, wrappers: false },
+  { name: "Recall strategies", hebbs: "4", pgvector: "1", qdrant: "1", neo4j: "1-2", wrappers: "1-2" },
+  { name: "Temporal recall", hebbs: true, pgvector: false, qdrant: false, neo4j: false, wrappers: false },
+  { name: "Causal reasoning", hebbs: true, pgvector: false, qdrant: false, neo4j: "Partial", wrappers: false },
+  { name: "Analogical transfer", hebbs: true, pgvector: false, qdrant: false, neo4j: false, wrappers: false },
+  { name: "Native decay & reinforcement", hebbs: true, pgvector: false, qdrant: false, neo4j: false, wrappers: false },
+  { name: "Background consolidation", hebbs: true, pgvector: false, qdrant: false, neo4j: false, wrappers: "Partial" },
+  { name: "Revision with lineage", hebbs: true, pgvector: false, qdrant: false, neo4j: false, wrappers: false },
+  { name: "Drop-in agent skill", hebbs: true, pgvector: false, qdrant: false, neo4j: false, wrappers: false },
+  { name: "LLM calls on hot path", hebbs: "Zero", pgvector: "N/A", qdrant: "N/A", neo4j: "N/A", wrappers: "Yes" },
+  { name: "Recall latency (10M)", hebbs: "<10ms", pgvector: "~20ms", qdrant: "~10ms", neo4j: "~50ms", wrappers: "50-200ms" },
+  { name: "Runtime dependencies", hebbs: "None", pgvector: "Postgres", qdrant: "Qdrant", neo4j: "JVM + Neo4j", wrappers: "3-4 services" },
 ];
 
 const products = [
@@ -15,7 +18,6 @@ const products = [
   { key: "pgvector", label: "pgvector" },
   { key: "qdrant", label: "Qdrant" },
   { key: "neo4j", label: "Neo4j" },
-  { key: "kv", label: "KV Stores" },
   { key: "wrappers", label: "Memory Wrappers" },
 ];
 ---
@@ -27,7 +29,7 @@ const products = [
         Why not just use...
       </h2>
       <p class="text-muted text-lg">
-        Same category. Different architecture.
+        Different category. Different architecture. Different capabilities.
       </p>
     </div>
 
@@ -37,7 +39,7 @@ const products = [
           <tr class="border-b border-border">
             <th class="text-left text-muted font-normal py-4 px-6 min-w-[200px]">Capability</th>
             {products.map((p) => (
-              <th class={`text-center font-mono text-xs py-4 px-4 min-w-[80px] ${p.key === 'hebbs' ? 'text-accent font-medium' : 'text-muted font-normal'}`}>
+              <th class={`text-center font-mono text-xs py-4 px-4 min-w-[100px] ${p.key === 'hebbs' ? 'text-accent font-medium' : 'text-muted font-normal'}`}>
                 {p.label}
               </th>
             ))}
@@ -50,11 +52,13 @@ const products = [
               {products.map((p) => {
                 const val = cap[p.key as keyof typeof cap];
                 return (
-                  <td class="py-3 px-4 text-center">
-                    {val ? (
+                  <td class="py-3 px-4 text-center text-xs font-mono">
+                    {val === true ? (
                       <span class={p.key === 'hebbs' ? 'text-accent' : 'text-green'}>&#10003;</span>
-                    ) : (
+                    ) : val === false ? (
                       <span class="text-muted/40">&mdash;</span>
+                    ) : (
+                      <span class={p.key === 'hebbs' ? 'text-accent font-medium' : 'text-muted'}>{val}</span>
                     )}
                   </td>
                 );

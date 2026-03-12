@@ -3,25 +3,25 @@ const groups = [
   {
     title: "Write",
     ops: [
-      { name: "remember()", desc: "Store a memory with importance scoring and structured context." },
-      { name: "revise()", desc: "Update a belief. Replaces, not appends. Full revision history." },
-      { name: "forget()", desc: "Prune by staleness, irrelevance, or compliance. GDPR-proof." },
+      { name: "remember()", desc: "Store with importance scoring and structured context.", why: "Every memory is weighted at birth." },
+      { name: "revise()", desc: "Update a belief. Replaces, not appends.", why: "No contradictory facts coexisting." },
+      { name: "forget()", desc: "Prune by staleness, irrelevance, or compliance.", why: "GDPR-proof. Signal improves over time." },
     ],
   },
   {
     title: "Read",
     ops: [
-      { name: "recall()", desc: "Retrieve by similarity, time, causation, or analogy. 4 strategies." },
-      { name: "prime()", desc: "Pre-load relevant context before an agent turn. For frameworks." },
-      { name: "subscribe()", desc: "Real-time push. Memory surfaces automatically as it becomes relevant." },
+      { name: "recall()", desc: "4 strategies: similarity, temporal, causal, analogical.", why: "Not just \"find similar\" - find relevant." },
+      { name: "prime()", desc: "Pre-load context before an agent turn.", why: "Agent starts knowing what matters." },
+      { name: "subscribe()", desc: "Real-time push as memories become relevant.", why: "Memories surface automatically." },
     ],
   },
   {
     title: "Consolidate",
     ops: [
-      { name: "reflect_policy()", desc: "Configure automatic background consolidation triggers." },
-      { name: "reflect()", desc: "Manual trigger for on-demand memory consolidation." },
-      { name: "insights()", desc: "Query distilled knowledge produced by reflection." },
+      { name: "reflect()", desc: "Consolidate episodes into higher-order insights.", why: "Your agent learns patterns." },
+      { name: "insights()", desc: "Query distilled knowledge from reflection.", why: "Higher-order understanding, not raw retrieval." },
+      { name: "reflect_policy()", desc: "Configure automatic consolidation triggers.", why: "Set it and forget it." },
     ],
   },
 ];
@@ -31,9 +31,9 @@ const groups = [
   <div class="mx-auto max-w-6xl px-6">
     <div class="text-center mb-16">
       <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-        Nine operations. Three groups.
+        Nine operations. That's the entire API.
       </h2>
-      <p class="text-muted text-lg">The complete API for agent memory.</p>
+      <p class="text-muted text-lg">Each one is a cognitive primitive that didn't exist as a single call before.</p>
     </div>
 
     <div class="grid md:grid-cols-3 gap-8">
@@ -44,7 +44,8 @@ const groups = [
             {group.ops.map((op) => (
               <div class="rounded-lg border border-border bg-surface/40 p-4">
                 <p class="font-mono text-sm font-medium text-cyan mb-2">{op.name}</p>
-                <p class="text-sm text-muted leading-relaxed">{op.desc}</p>
+                <p class="text-sm text-muted leading-relaxed mb-2">{op.desc}</p>
+                <p class="text-xs text-accent/80 italic">{op.why}</p>
               </div>
             ))}
           </div>

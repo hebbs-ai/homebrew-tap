@@ -1,17 +1,10 @@
 ---
 const strategies = [
   {
-    name: "Similarity",
-    question: "What looks like this?",
-    example: "Find relevant objection responses from past interactions.",
-    precision: "~",
-    vs: "~",
-    color: "text-cyan",
-  },
-  {
     name: "Temporal",
     question: "What happened, in order?",
-    example: "Reconstruct a prospect's full interaction history chronologically.",
+    scenario: "\"Walk me through the Acme deal\"",
+    hebbsHow: "Temporal index, events in sequence",
     precision: "91%",
     vs: "23%",
     color: "text-accent",
@@ -19,7 +12,8 @@ const strategies = [
   {
     name: "Causal",
     question: "What caused this outcome?",
-    example: "Walk the causal graph backward from a lost deal to find the root cause.",
+    scenario: "\"Why did the deployment fail on Friday?\"",
+    hebbsHow: "Causal graph backward, root cause chain",
     precision: "78%",
     vs: "15%",
     color: "text-accent",
@@ -27,41 +21,61 @@ const strategies = [
   {
     name: "Analogical",
     question: "What's structurally similar in another domain?",
-    example: "Apply finance sales patterns to close a healthcare deal.",
+    scenario: "\"We had a similar onboarding problem - what did we learn?\"",
+    hebbsHow: "Structural pattern matching, transferred insights",
     precision: "74%",
     vs: "31%",
     color: "text-accent",
   },
+  {
+    name: "Similarity",
+    question: "What looks like this?",
+    scenario: "\"Find relevant objection responses from past interactions\"",
+    hebbsHow: "HNSW vector index + configurable scoring weights",
+    precision: null,
+    vs: null,
+    color: "text-cyan",
+  },
 ];
 ---
 
-<section class="py-20 md:py-32 border-t border-border/50">
+<section id="recall" class="py-20 md:py-32 border-t border-border/50">
   <div class="mx-auto max-w-6xl px-6">
     <div class="text-center mb-16">
       <h2 class="text-3xl md:text-4xl font-bold tracking-tight mb-4">
-        Four recall strategies.
+        Four ways to remember. Everyone else has one.
       </h2>
-      <p class="text-muted text-lg">
-        Most memory systems give you one retrieval mode: similarity search. HEBBS gives you four.
+      <p class="text-muted text-lg max-w-3xl mx-auto">
+        Vector databases answer one question: "what looks similar?" HEBBS answers four - each backed by a purpose-built index.
       </p>
     </div>
 
-    <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-6">
+    <div class="grid sm:grid-cols-2 gap-6">
       {strategies.map((s) => (
         <div class="rounded-xl border border-border bg-surface/40 p-6 flex flex-col">
           <h3 class="font-mono text-xs uppercase tracking-wider text-accent mb-3">{s.name}</h3>
-          <p class="text-text font-medium text-sm mb-3">"{s.question}"</p>
-          <p class="text-muted text-sm leading-relaxed flex-1 mb-6">{s.example}</p>
-          {s.precision !== "~" ? (
+          <p class="text-text font-medium text-sm mb-2">"{s.question}"</p>
+          <p class="text-muted text-sm leading-relaxed mb-3 italic">{s.scenario}</p>
+          <p class="text-muted text-xs leading-relaxed flex-1 mb-6">{s.hebbsHow}</p>
+          {s.precision ? (
             <div class="border-t border-border pt-4">
-              <p class="font-mono text-2xl font-bold {s.color}">{s.precision}</p>
-              <p class="text-xs text-muted mt-1">
-                precision <span class="text-red">(vs {s.vs} similarity-only)</span>
-              </p>
+              <div class="flex items-baseline gap-3">
+                <p class="font-mono text-3xl font-bold {s.color}">{s.precision}</p>
+                <p class="text-xs text-muted">
+                  precision <span class="text-red">(vs {s.vs} similarity-only)</span>
+                </p>
+              </div>
+              <div class="mt-3 flex h-2 rounded-full overflow-hidden bg-surface">
+                <div class="bg-accent/80 rounded-full" style={`width: ${s.precision}`}></div>
+              </div>
+              <div class="flex justify-between mt-1">
+                <span class="text-[10px] text-muted">similarity-only: {s.vs}</span>
+                <span class="text-[10px] text-accent">HEBBS: {s.precision}</span>
+              </div>
             </div>
           ) : (
             <div class="border-t border-border pt-4">
-              <p class="text-xs text-muted">Baseline retrieval mode</p>
+              <p class="text-xs text-muted">The baseline everyone has. HEBBS has it too - plus configurable scoring weights that blend relevance, recency, importance, and reinforcement.</p>
             </div>
           )}
         </div>
