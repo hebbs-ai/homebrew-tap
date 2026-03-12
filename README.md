@@ -1,6 +1,6 @@
-# HEBBS Skill for Claude
+# HEBBS Skill
 
-Teaches Claude how to use [HEBBS](https://hebbs.dev) — a local-first cognitive memory engine that stores, indexes, and retrieves knowledge.
+Teaches AI agents how to use [HEBBS](https://hebbs.dev) — a local-first cognitive memory engine that stores, indexes, and retrieves knowledge.
 
 ## Install the skill
 
