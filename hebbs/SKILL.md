@@ -40,7 +40,7 @@ If you see a connection error, start the server in the background:
 HEBBS_AUTH_ENABLED=false nohup hebbs-server --data-dir ~/.hebbs/data > /tmp/hebbs-server.log 2>&1 &
 ```
 
-Wait 2 seconds, then retry. Do not proceed until the server responds.
+Wait 15 seconds for the ONNX embedder to initialize, then retry. Do not proceed until the server responds.
 
 ## Prerequisites
 
