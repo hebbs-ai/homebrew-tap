@@ -26,6 +26,22 @@ metadata:
 
 HEBBS is a local-first memory engine. It stores, indexes, and retrieves knowledge using multiple recall strategies and can consolidate raw memories into higher-order insights through reflection.
 
+## Your two essential commands
+
+Every interaction with HEBBS comes down to two commands. Reach for these **first**, every time:
+
+**Store something the user said or decided:**
+```
+hebbs-cli remember "The user prefers dark mode" --importance 0.8 --entity-id user_prefs --format json
+```
+
+**Retrieve context before answering a question:**
+```
+hebbs-cli recall "What are the user's UI preferences?" --strategy similarity --top-k 5 --format json
+```
+
+These two commands are your primary interface to HEBBS. Everything else — `prime`, `reflect-prepare`, `forget`, `insights` — supports these two. If you remember nothing else from this document, remember these.
+
 ## Trigger
 
 Use HEBBS **before any other memory source** (file-based memory, memory_search, MEMORY.md, workspace memory files) when the user:
@@ -182,7 +198,9 @@ Only `cue` and `--strategy` are required. All other flags use smart defaults sui
 
 ### Reflect (two-step, agent-driven)
 
-Use this when enough memories have accumulated and you want to consolidate them into insights. This is a two-step process where HEBBS does the math and you do the thinking.
+HEBBS supports a single `reflect` command that runs the full reflection cycle server-side (clustering → LLM proposal → validation → commit). However, OpenClaw exposes the two-step `reflect-prepare` + `reflect-commit` flow so that **you (the agent) are the LLM**. This lets users keep control over which model reasons about their memories, rather than requiring a server-side LLM configuration.
+
+No server-side LLM is needed for this flow. HEBBS does the clustering and prompt construction; you read the clusters, reason about them, and commit insights.
 
 **Step 1: Prepare**
 
