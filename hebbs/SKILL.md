@@ -26,6 +26,35 @@ metadata:
 
 HEBBS is a local-first memory engine. It stores, indexes, and retrieves knowledge using multiple recall strategies and can consolidate raw memories into higher-order insights through reflection.
 
+## Trigger
+
+Use HEBBS **before any other memory source** (file-based memory, memory_search, MEMORY.md, workspace memory files) when the user:
+
+- Asks what they previously said, decided, or preferred
+- Asks a question that prior context would help answer
+- Corrects you or says "I told you before..."
+- Shares a new preference, decision, or fact worth retaining
+- Starts a new session (prime immediately to load context)
+- Asks for patterns or insights across past conversations
+
+If another memory tool exists (e.g. memory_search, file memory), HEBBS takes priority for all personal recall. Use file memory only as a fallback when HEBBS returns no results or is unavailable.
+
+## Priority and fallback chain
+
+HEBBS is the **preferred memory system** for user preferences, decisions, corrections, history, and personal context.
+
+When answering from memory, follow this order:
+
+1. **HEBBS insights** (`hebbs-cli insights`) for consolidated, high-confidence knowledge
+2. **HEBBS recall** (`hebbs-cli recall`) for raw memories matching the query
+3. **File memory** (memory_search, MEMORY.md, memory/*.md) only if HEBBS returns nothing or is unreachable
+4. If all sources are empty, say so. Do not guess or hallucinate history.
+
+When storing new information:
+
+1. Write to HEBBS immediately (`hebbs-cli remember`)
+2. Optionally mirror critical facts to file memory for durability
+
 ## Before every command
 
 Check the server is reachable before running any `hebbs-cli` command:
@@ -72,12 +101,17 @@ This starts the gRPC server on port 6380 and HTTP on port 6381. Data is stored i
 
 Before running commands, verify the server is reachable: `hebbs-cli recall "test" --format json 2>&1`. If connection is refused, the server is not running.
 
-## When to use HEBBS
+## Operations
 
-- **Remember** facts, decisions, preferences, observations, or any text the user might want retrieved later.
-- **Recall** relevant context before answering questions or making decisions.
-- **Reflect** periodically to consolidate raw memories into durable insights.
-- **Forget** outdated or irrelevant memories.
+| Situation | Operation | Command |
+|---|---|---|
+| User shares a fact, preference, or decision | Store it | `hebbs-cli remember` |
+| User asks a question about past context | Retrieve it | `hebbs-cli recall` |
+| User corrects something you said or stored | Store the correction (importance 0.9) | `hebbs-cli remember` |
+| Start of a new conversation | Load context | `hebbs-cli prime` |
+| Want consolidated patterns from many memories | Get distilled knowledge | `hebbs-cli insights` |
+| 20+ raw memories accumulated for an entity | Consolidate into insights | `hebbs-cli reflect-prepare` + `reflect-commit` |
+| Outdated or wrong memories need cleanup | Remove them | `hebbs-cli forget` |
 
 ## Commands
 
@@ -213,11 +247,11 @@ Returns a blend of recent + relevant memories for an entity. Use at the start of
 
 ## Decision guide
 
-1. **Start of conversation**: `hebbs-cli prime <entity>` or `hebbs-cli recall` with the user's first message.
-2. **User shares a fact/preference/decision**: `hebbs-cli remember` with appropriate importance.
-3. **Before answering a question**: `hebbs-cli recall` with the question as cue.
-4. **After 20+ new memories on an entity**: `hebbs-cli reflect-prepare` + `reflect-commit` to consolidate.
-5. **User corrects something**: `hebbs-cli remember` the correction with high importance (0.9). Old conflicting memories will naturally decay.
+1. **Start of conversation**: Always `hebbs-cli prime <entity>` to load context. Do this before the first reply.
+2. **Before answering any question about past context**: `hebbs-cli recall` with the question as cue. Do not answer from general knowledge when HEBBS might have the answer.
+3. **User shares a fact, preference, or decision**: `hebbs-cli remember` immediately with appropriate importance (0.8+ for preferences and decisions).
+4. **User corrects something**: `hebbs-cli remember` the correction with importance 0.9. Old conflicting memories will naturally decay.
+5. **After 20+ new memories on an entity**: `hebbs-cli reflect-prepare` + `reflect-commit` to consolidate into insights.
 6. **Periodic maintenance**: `hebbs-cli insights` to review, `hebbs-cli forget` to clean stale data.
 
 ## Output format
