@@ -1,0 +1,14 @@
+# OpenAI config: GPT-4o for chat, GPT-4o-mini for extraction.
+# Requires: export OPENAI_API_KEY="your-key"
+
+[llm]
+conversation_provider = "openai"
+conversation_model = "gpt-4o"
+extraction_provider = "openai"
+extraction_model = "gpt-4o-mini"
+
+[llm.openai]
+api_key_env = "OPENAI_API_KEY"
+
+[hebbs]
+address = "localhost:6380"

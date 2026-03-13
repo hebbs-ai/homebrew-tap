@@ -1,0 +1,21 @@
+# Gemini via Vertex AI -- uses GOOGLE_APPLICATION_CREDENTIALS for auth.
+# Requires:
+#   export GOOGLE_CLOUD_PROJECT="your-project-id"
+#   export GOOGLE_CLOUD_LOCATION="your-region"
+#   export GOOGLE_APPLICATION_CREDENTIALS="/path/to/service-account.json"
+
+[llm]
+conversation_provider = "gemini-vertex"
+conversation_model = "gemini-2.5-flash"
+extraction_provider = "gemini-vertex"
+extraction_model = "gemini-2.5-flash"
+
+[llm.gemini-vertex]
+model = "gemini-2.5-flash"
+# project and location are read from env: GOOGLE_CLOUD_PROJECT, GOOGLE_CLOUD_LOCATION
+# Override here if needed:
+# project = "your-gcp-project-id"
+# location = "asia-south1"
+
+[hebbs]
+address = "localhost:6380"

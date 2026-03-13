@@ -1,0 +1,14 @@
+# Local config: Ollama for chat + extraction, no API keys needed.
+# Requires: ollama running locally with llama3.2 pulled.
+
+[llm]
+conversation_provider = "ollama"
+conversation_model = "llama3.2"
+extraction_provider = "ollama"
+extraction_model = "llama3.2"
+
+[llm.ollama]
+base_url = "http://localhost:11434"
+
+[hebbs]
+address = "localhost:6380"

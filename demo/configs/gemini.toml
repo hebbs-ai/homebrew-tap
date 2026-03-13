@@ -1,0 +1,14 @@
+# Default config: Gemini Flash for chat + extraction, HEBBS server for embeddings.
+# Requires: export GEMINI_API_KEY="your-key"
+
+[llm]
+conversation_provider = "gemini"
+conversation_model = "gemini-2.0-flash"
+extraction_provider = "gemini"
+extraction_model = "gemini-2.0-flash"
+
+[llm.gemini]
+api_key_env = "GEMINI_API_KEY"
+
+[hebbs]
+address = "localhost:6380"
