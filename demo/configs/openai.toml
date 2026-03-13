@@ -1,0 +1,11 @@
+[llm]
+conversation_provider = "openai"
+conversation_model = "gpt-4o"
+extraction_provider = "openai"
+extraction_model = "gpt-4o-mini"
+
+[llm.openai]
+api_key_env = "OPENAI_API_KEY"
+
+[hebbs]
+address = "localhost:6380"

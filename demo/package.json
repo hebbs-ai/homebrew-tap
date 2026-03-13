@@ -1,0 +1,22 @@
+{
+  "name": "hebbs-demo-ts",
+  "version": "0.1.0",
+  "description": "HEBBS Demo: AI Sales Intelligence Agent (TypeScript, gRPC)",
+  "type": "module",
+  "scripts": {
+    "interactive": "tsx src/index.ts interactive",
+    "scenarios": "tsx src/index.ts scenarios",
+    "start": "tsx src/index.ts"
+  },
+  "dependencies": {
+    "@hebbs/sdk": "file:..",
+    "chalk": "^5.3.0",
+    "commander": "^12.0.0",
+    "openai": "^4.50.0",
+    "smol-toml": "^1.2.0"
+  },
+  "devDependencies": {
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0"
+  }
+}

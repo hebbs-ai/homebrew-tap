@@ -1,0 +1,60 @@
+{
+  "name": "@hebbs/sdk",
+  "version": "0.1.2",
+  "description": "TypeScript SDK for HEBBS cognitive memory engine (gRPC)",
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "proto"
+  ],
+  "engines": {
+    "node": ">=18"
+  },
+  "scripts": {
+    "build": "tsup",
+    "test": "vitest run",
+    "test:unit": "vitest run tests/unit",
+    "test:integration": "vitest run tests/integration",
+    "test:e2e": "tsx tests/e2e/e2e.test.ts",
+    "lint": "tsc --noEmit",
+    "typecheck": "tsc --noEmit",
+    "prepublishOnly": "npm run build"
+  },
+  "publishConfig": {
+    "access": "public",
+    "registry": "https://registry.npmjs.org"
+  },
+  "dependencies": {
+    "@grpc/grpc-js": "^1.12.0",
+    "@grpc/proto-loader": "^0.7.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "tsx": "^4.0.0",
+    "typescript": "^5.4.0",
+    "vitest": "^2.0.0"
+  },
+  "keywords": [
+    "hebbs",
+    "memory",
+    "ai",
+    "agent",
+    "cognitive",
+    "grpc"
+  ],
+  "license": "Apache-2.0",
+  "author": "HEBBS AI",
+  "homepage": "https://hebbs.ai",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/hebbs-ai/hebbs-typescript"
+  }
+}
