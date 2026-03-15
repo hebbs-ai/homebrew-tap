@@ -7,17 +7,17 @@ class Hebbs < Formula
   on_macos do
     if Hardware::CPU.arm?
       url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.0/hebbs-macos-arm64.tar.gz"
-      sha256 "31da60e581e09115c67e0468b92639c5dfb0bb06d9fd627f965b439c5e470ea4"
+      sha256 "d6f79cba1ca8d81eb1f2903649ca384a08e5b8bbf8b5f4cf9ecd9d477eed024f"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel?
       url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.0/hebbs-linux-x86_64.tar.gz"
-      sha256 "39084617a371d0a3cd79d3fef75f66af16b0771027fdddc3a77181432ab19bbd"
+      sha256 "50c727e67cd8dd35ce1372ed194725c2eec597211047e9528de730e345a81efe"
     elsif Hardware::CPU.arm?
       url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.0/hebbs-linux-aarch64.tar.gz"
-      sha256 "96e3595e4f225d128acec5824bd646a206b9353eb2fa88d919ca95a66aa8df01"
+      sha256 "11858223d63a1881f057954ace894ce6ca0ee4c2f004248e459d7d33beb03328"
     end
   end
 
