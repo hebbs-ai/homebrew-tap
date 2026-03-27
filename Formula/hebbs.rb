@@ -1,46 +1,32 @@
 class Hebbs < Formula
-  desc "Cognitive memory engine: store, recall, reflect, and forget knowledge"
+  desc "Cognitive memory engine — store, recall, reflect, and forget knowledge"
   homepage "https://hebbs.dev"
-  version "0.3.2"
+  version "0.3.3"
   license "BSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.2/hebbs-macos-arm64.tar.gz"
-      sha256 "6ead83091dc3fb54e9d7689546bd56a0b5c1dfef3691ebd71908ab8611132d74"
+      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.3/hebbs-macos-arm64.tar.gz"
+      sha256 "0c1fc4fe9c3fc8b001308c3f62a397b61af618f6e3d10ad96c4c12ccc0683b14"
     elsif Hardware::CPU.intel?
-      # Intel binary available from v0.3.3+
       url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.3/hebbs-macos-x86_64.tar.gz"
-      sha256 "PLACEHOLDER_UNTIL_RELEASE"
+      sha256 "947a5b38025f8834702fbcb2d9f940e3b32c6fdc55432f90493087dad73f8daf"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel?
-      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.2/hebbs-linux-x86_64.tar.gz"
-      sha256 "cb73291b01c3ed4b40f1954620c27bc1320a48716563699b1e58443d789f9550"
+      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.3/hebbs-linux-x86_64.tar.gz"
+      sha256 "52a16c547e4d56436eadf8db1b8fb1d7f26a177a326824e761b52d895bc1d3af"
     elsif Hardware::CPU.arm?
-      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.2/hebbs-linux-aarch64.tar.gz"
-      sha256 "122c54e63b10b4ae4a633880ab51fd2938467fb5c16bd0b73bb1934d9e49cadb"
+      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.3/hebbs-linux-aarch64.tar.gz"
+      sha256 "5ba4045871c2d9faaa2aa6870a84b929ce70db6104637cce99dc67f2f12bc5de"
     end
   end
 
   def install
     bin.install "hebbs"
     bin.install "hebbs-bench" if File.exist?("hebbs-bench")
-  end
-
-  def caveats
-    <<~EOS
-      HEBBS runs locally with zero configuration. No server needed.
-
-      Quick start:
-        hebbs init .
-        hebbs remember "hello world" --format json
-        hebbs recall "hello" --format json
-
-      Data is stored in .hebbs/ (project) or ~/.hebbs/ (global fallback).
-    EOS
   end
 
   test do
