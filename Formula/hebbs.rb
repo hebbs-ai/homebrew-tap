@@ -1,26 +1,26 @@
 class Hebbs < Formula
   desc "Cognitive memory engine — store, recall, reflect, and forget knowledge"
   homepage "https://hebbs.dev"
-  version "0.3.3"
+  version "0.3.4"
   license "BSL-1.1"
 
   on_macos do
     if Hardware::CPU.arm?
-      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.3/hebbs-macos-arm64.tar.gz"
-      sha256 "0c1fc4fe9c3fc8b001308c3f62a397b61af618f6e3d10ad96c4c12ccc0683b14"
+      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.4/hebbs-macos-arm64.tar.gz"
+      sha256 "d0fc9466c64324d40b652dcd6bd3902a48fb4c599ef0bf6eec9a832d74776ed5"
     elsif Hardware::CPU.intel?
-      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.3/hebbs-macos-x86_64.tar.gz"
-      sha256 "947a5b38025f8834702fbcb2d9f940e3b32c6fdc55432f90493087dad73f8daf"
+      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.4/hebbs-macos-x86_64.tar.gz"
+      sha256 "fb4589701d7fcb6f18133a7052956783e5f9acdd570bd0791420d4bbc510a8bb"
     end
   end
 
   on_linux do
     if Hardware::CPU.intel?
-      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.3/hebbs-linux-x86_64.tar.gz"
-      sha256 "52a16c547e4d56436eadf8db1b8fb1d7f26a177a326824e761b52d895bc1d3af"
+      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.4/hebbs-linux-x86_64.tar.gz"
+      sha256 "4c574858d7a160ddc61fd2ce881bda7f62d7683cc4c9dd7f7a03a95697b3abc4"
     elsif Hardware::CPU.arm?
-      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.3/hebbs-linux-aarch64.tar.gz"
-      sha256 "5ba4045871c2d9faaa2aa6870a84b929ce70db6104637cce99dc67f2f12bc5de"
+      url "https://github.com/hebbs-ai/hebbs/releases/download/v0.3.4/hebbs-linux-aarch64.tar.gz"
+      sha256 "85784c9382ebef070065a19b6686e1e5ce2d2a31e80b31553b11f6f53700a1d9"
     end
   end
 
